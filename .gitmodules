@@ -293,3 +293,7 @@
 	path = third_party/imgui/repo
 	url = https://github.com/ocornut/imgui
 	platforms = linux
+[submodule "third_party/openthread/ot-samsung"]
+	path = third_party/openthread/ot-samsung
+	url = https://github.com/junyong-sim/openthread
+	branch = feature/build-ioter-linux

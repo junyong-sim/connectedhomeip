@@ -120,6 +120,8 @@ protected:
     void _SetRouterPromotion(bool val);
     void _OnWoBLEAdvertisingStart(void);
     void _OnWoBLEAdvertisingStop(void);
+    CHIP_ERROR _SetChild(void);
+    bool _IsWantedNetwork(Thread::OperationalDataset newDataset);
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     CHIP_ERROR _AddSrpService(const char * aInstanceName, const char * aName, uint16_t aPort,
@@ -226,7 +228,7 @@ private:
     static constexpr size_t kTotalDnsServiceTxtValueSize = std::max(Dnssd::CommissionAdvertisingParameters::kTxtTotalValueSize,
                                                                     Dnssd::OperationalAdvertisingParameters::kTxtTotalValueSize);
     static constexpr size_t kTotalDnsServiceTxtKeySize   = std::max(Dnssd::CommissionAdvertisingParameters::kTxtTotalKeySize,
-                                                                  Dnssd::OperationalAdvertisingParameters::kTxtTotalKeySize);
+                                                                    Dnssd::OperationalAdvertisingParameters::kTxtTotalKeySize);
 #else
     // Thread only supports operational discovery.
     static constexpr uint8_t kMaxDnsServiceTxtEntriesNumber = Dnssd::OperationalAdvertisingParameters::kTxtMaxNumber;
@@ -274,7 +276,10 @@ private:
     CHIP_ERROR SetSEDIntervalMode(ConnectivityManager::SEDIntervalMode intervalType);
 #endif
 
-    inline ImplClass * Impl() { return static_cast<ImplClass *>(this); }
+    inline ImplClass * Impl()
+    {
+        return static_cast<ImplClass *>(this);
+    }
 };
 
 // Instruct the compiler to instantiate the template only when explicitly told to do so.
