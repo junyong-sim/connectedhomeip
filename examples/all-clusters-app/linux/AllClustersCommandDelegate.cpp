@@ -19,6 +19,7 @@
 #include "AllClustersCommandDelegate.h"
 
 #include <app-common/zap-generated/att-storage.h>
+#include <app-common/zap-generated/attribute-type.h>
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/clusters/general-diagnostics-server/general-diagnostics-server.h>
 #include <app/clusters/software-diagnostics-server/software-diagnostics-server.h>
@@ -142,6 +143,26 @@ void AllClustersAppCommandHandler::HandleCommand(intptr_t context)
     {
         self->OnRebootSignalHandler(BootReasonType::kSoftwareReset);
     }
+    else if (name == "Onoff")
+    {
+        uint8_t onoff = static_cast<uint8_t>(self->mJsonValue["onoff"].asUInt());
+        self->OnSamsungOnOffSignalHandler(onoff);
+    }
+    else if (name == "Level")
+    {
+        uint8_t level = static_cast<uint8_t>(self->mJsonValue["level"].asUInt());
+        self->OnSamsungLevelSignalHandler(level);
+    }
+    else if (name == "Lockstate")
+    {
+        uint8_t lockstate = static_cast<uint8_t>(self->mJsonValue["lockstate"].asUInt());
+        self->OnSamsungDoorLockSignalHandler(lockstate);
+    }
+    else if (name == "Bool")
+    {
+        uint8_t lockstate = static_cast<uint8_t>(self->mJsonValue["bool"].asUInt());
+        self->OnSamsungBoolSignalHandler(lockstate);
+    }
     else
     {
         ChipLogError(NotSpecified, "Unhandled command: Should never happens");
@@ -149,6 +170,58 @@ void AllClustersAppCommandHandler::HandleCommand(intptr_t context)
 
 exit:
     Platform::Delete(self);
+}
+
+void AllClustersAppCommandHandler::OnSamsungOnOffSignalHandler(uint8_t onoff)
+{
+    int endpoint = 1;
+    bool value   = (onoff > 0) ? true : false;
+    bool err;
+    err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { OnOffManager::SetOnOff(endpoint, value); }) ==
+           CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set OnOff Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungLevelSignalHandler(uint8_t level)
+{
+    int endpoint = 1;
+    int value    = static_cast<int>(level);
+    bool err;
+    err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { LevelManager::SetLevel(endpoint, value); }) ==
+           CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set Level Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungBoolSignalHandler(uint8_t boolstate)
+{
+    int endpoint = 1;
+    bool value   = (boolstate > 0) ? true : false;
+    bool err;
+    err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { BoolManager::SetBooleanState(endpoint, value); }) ==
+           CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set Bool Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungDoorLockSignalHandler(uint8_t lockstate)
+{
+    int endpoint = 1;
+    int value    = static_cast<int>(lockstate);
+    bool err;
+    err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { DoorLockManager::SetLockState(endpoint, value); }) ==
+           CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set lockstate Endpoint Error");
+    }
 }
 
 bool AllClustersAppCommandHandler::IsClusterPresentOnAnyEndpoint(ClusterId clusterId)

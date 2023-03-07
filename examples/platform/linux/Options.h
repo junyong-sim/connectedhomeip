@@ -65,6 +65,11 @@ struct LinuxDeviceOptions
     chip::CSRResponseOptions mCSRResponseOptions;
     uint8_t testEventTriggerEnableKey[16] = { 0 };
     chip::FabricId commissionerFabricId   = chip::kUndefinedFabricId;
+    uint16_t device_type_id               = 0x100;     // light bulb is default device type
+    const char * threadVersion            = "0";       // 0 is default version (1.3)
+    const char * comPort                  = "ttyACM0"; // ttyACM0 is default as Nordic dongle
+    uint16_t threadDebugLevel             = 5;         // default is 5 (DEBUG)
+    uint16_t device_num                   = 0;         // default is 0 (device0)
 
     static LinuxDeviceOptions & GetInstance();
 };

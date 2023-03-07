@@ -18,6 +18,11 @@
 
 #pragma once
 
+#include "Manager/BoolManager.h"
+#include "Manager/ColorControlManager.h"
+#include "Manager/DoorLockManager.h"
+#include "Manager/LevelManager.h"
+#include "Manager/OnOffManager.h"
 #include "NamedPipeCommands.h"
 
 #include <json/json.h>
@@ -88,6 +93,26 @@ private:
      * sequence, after it has been detected that the sequence has ended.
      */
     void OnSwitchMultiPressCompleteHandler(uint8_t previousPosition, uint8_t count);
+
+    /**
+     * Should be called when input on/off commands
+     */
+    void OnSamsungOnOffSignalHandler(uint8_t onoff);
+
+    /**
+     * Should be called when input level commands
+     */
+    void OnSamsungLevelSignalHandler(uint8_t level);
+
+    /**
+     * Should be called when input Bool commands
+     */
+    void OnSamsungBoolSignalHandler(uint8_t boolstate);
+
+    /**
+     * Should be called when input DoorLock commands
+     */
+    void OnSamsungDoorLockSignalHandler(uint8_t lockstate);
 };
 
 class AllClustersCommandDelegate : public NamedPipeCommandDelegate

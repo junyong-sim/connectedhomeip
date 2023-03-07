@@ -26,6 +26,9 @@
 #include <lib/core/CHIPError.h>
 #include <lib/core/NodeId.h>
 #include <lib/support/logging/CHIPLogging.h>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/attestation_verifier/DefaultDeviceAttestationVerifier.h>
@@ -231,10 +234,22 @@ int ChipLinuxAppInit(int argc, char * const argv[], OptionSet * customOptions)
     err = ParseArguments(argc, argv, customOptions);
     SuccessOrExit(err);
 
+    // save config value to IoTerJson class
+    IoTer::init(LinuxDeviceOptions::GetInstance().threadVersion, LinuxDeviceOptions::GetInstance().comPort,
+                LinuxDeviceOptions::GetInstance().threadDebugLevel, LinuxDeviceOptions::GetInstance().device_num);
+
 #ifdef CHIP_CONFIG_KVS_PATH
     if (LinuxDeviceOptions::GetInstance().KVS == nullptr)
     {
+#ifdef CHIP_CONFIG_MULTIPLE_INSTANCE
+        char chipKvsPath[100] = {
+            0,
+        };
+        sprintf(chipKvsPath, "/tmp/chip_kvs_device%d.ini", LinuxDeviceOptions::GetInstance().device_num);
+        err = DeviceLayer::PersistedStorage::KeyValueStoreMgrImpl().Init(chipKvsPath);
+#else
         err = DeviceLayer::PersistedStorage::KeyValueStoreMgrImpl().Init(CHIP_CONFIG_KVS_PATH);
+#endif
     }
     else
     {
@@ -242,7 +257,9 @@ int ChipLinuxAppInit(int argc, char * const argv[], OptionSet * customOptions)
     }
     SuccessOrExit(err);
 #endif
-
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:0", LinuxDeviceOptions::GetInstance().device_num);
+#endif
     err = DeviceLayer::PlatformMgr().InitChipStack();
     SuccessOrExit(err);
 
@@ -269,6 +286,33 @@ int ChipLinuxAppInit(int argc, char * const argv[], OptionSet * customOptions)
     {
         ChipLogProgress(NotSpecified, "==== Onboarding payload for Standard Commissioning Flow ====");
         PrintOnboardingCodes(LinuxDeviceOptions::GetInstance().payload);
+#if CHIP_SAMSUNG_UI_LOGGING
+        char pairingcode[25] = { 0 };
+        char payloadBuffer[chip::QRCodeBasicSetupPayloadGenerator::kMaxQRCodeBase38RepresentationLength + 1];
+        chip::MutableCharSpan manualPairingCode(payloadBuffer);
+        if (GetManualPairingCode(manualPairingCode, LinuxDeviceOptions::GetInstance().payload) == CHIP_NO_ERROR)
+        {
+            sprintf(pairingcode, "pair:%s", manualPairingCode.data());
+            IoTer::pipe_logging(pairingcode, LinuxDeviceOptions::GetInstance().device_num);
+        }
+        else
+        {
+            ChipLogError(AppServer, "Getting manual pairing code failed!");
+        }
+
+        char qrpayload[50] = { 0 };
+        chip::MutableCharSpan qrCode(payloadBuffer);
+        if (GetQRCode(qrCode, LinuxDeviceOptions::GetInstance().payload) == CHIP_NO_ERROR)
+        {
+            sprintf(qrpayload, "qrcode:%s", qrCode.data());
+            IoTer::pipe_logging(qrpayload, LinuxDeviceOptions::GetInstance().device_num);
+        }
+        else
+        {
+            ChipLogError(AppServer, "Getting QR code failed!");
+        }
+
+#endif
     }
 
 #if defined(PW_RPC_ENABLED)
@@ -340,6 +384,20 @@ exit:
     return 0;
 }
 
+/*
+ * To support multiple dongles, we have to use several UDP ports.
+ * For example, when we setup more than one dongles,
+ * applying device number to UDP port offset
+ */
+static int getInstanceNum()
+{
+#ifdef CHIP_CONFIG_MULTIPLE_INSTANCE
+    return LinuxDeviceOptions::GetInstance().device_num;
+#else
+    return 0;
+#endif
+}
+
 void ChipLinuxAppMainLoop(AppMainLoopImplementation * impl)
 {
     gMainLoopImplementation = impl;
@@ -352,13 +410,14 @@ void ChipLinuxAppMainLoop(AppMainLoopImplementation * impl)
     std::thread shellThread([]() { Engine::Root().RunMainLoop(); });
     Shell::RegisterCommissioneeCommands();
 #endif
-    initParams.operationalServicePort        = CHIP_PORT;
-    initParams.userDirectedCommissioningPort = CHIP_UDC_PORT;
+    int offset                               = getInstanceNum();
+    initParams.operationalServicePort        = CHIP_PORT + offset;     // 5540 - 5549
+    initParams.userDirectedCommissioningPort = CHIP_UDC_PORT + offset; // 5550 - 5559
 
 #if CHIP_DEVICE_CONFIG_ENABLE_BOTH_COMMISSIONER_AND_COMMISSIONEE || CHIP_DEVICE_ENABLE_PORT_PARAMS
     // use a different service port to make testing possible with other sample devices running on same host
-    initParams.operationalServicePort        = LinuxDeviceOptions::GetInstance().securedDevicePort;
-    initParams.userDirectedCommissioningPort = LinuxDeviceOptions::GetInstance().unsecuredCommissionerPort;
+    initParams.operationalServicePort        = LinuxDeviceOptions::GetInstance().securedDevicePort + offset;
+    initParams.userDirectedCommissioningPort = LinuxDeviceOptions::GetInstance().unsecuredCommissionerPort + offset;
 #endif // CHIP_DEVICE_CONFIG_ENABLE_BOTH_COMMISSIONER_AND_COMMISSIONEE
 
     initParams.interfaceId = LinuxDeviceOptions::GetInstance().interfaceId;
@@ -402,7 +461,7 @@ void ChipLinuxAppMainLoop(AppMainLoopImplementation * impl)
 
 #if CHIP_DEVICE_CONFIG_ENABLE_BOTH_COMMISSIONER_AND_COMMISSIONEE
     ChipLogProgress(AppServer, "Starting commissioner");
-    VerifyOrReturn(InitCommissioner(LinuxDeviceOptions::GetInstance().securedCommissionerPort,
+    VerifyOrReturn(InitCommissioner(LinuxDeviceOptions::GetInstance().securedCommissionerPort + 10 + offset,
                                     LinuxDeviceOptions::GetInstance().unsecuredCommissionerPort,
                                     LinuxDeviceOptions::GetInstance().commissionerFabricId) == CHIP_NO_ERROR);
     ChipLogProgress(AppServer, "Started commissioner");

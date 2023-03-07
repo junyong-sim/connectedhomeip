@@ -459,20 +459,49 @@ CHIP_ERROR PosixConfig::EnsureNamespace(const char * ns)
     CHIP_ERROR err             = CHIP_NO_ERROR;
     ChipLinuxStorage * storage = nullptr;
 
+#ifdef CHIP_CONFIG_MULTIPLE_INSTANCE
+    char chipFactoryPath[100] = {
+        0,
+    };
+    char chipConfigPath[100] = {
+        0,
+    };
+    char chipCounterPath[100] = {
+        0,
+    };
+
+    uint16_t device_num = IoTer::getSamsungDeviceNumber();
+    sprintf(chipFactoryPath, "/tmp/chip_factory_device%d.ini", device_num);
+    sprintf(chipConfigPath, "/tmp/chip_config_device%d.ini", device_num);
+    sprintf(chipCounterPath, "/tmp/chip_counters_device%d.ini", device_num);
+#endif
+
     if (strcmp(ns, kConfigNamespace_ChipFactory) == 0)
     {
         storage = &gChipLinuxFactoryStorage;
-        err     = storage->Init(CHIP_DEFAULT_FACTORY_PATH);
+#ifdef CHIP_CONFIG_MULTIPLE_INSTANCE
+        err = storage->Init(chipFactoryPath);
+#else
+        err = storage->Init(CHIP_DEFAULT_FACTORY_PATH);
+#endif
     }
     else if (strcmp(ns, kConfigNamespace_ChipConfig) == 0)
     {
         storage = &gChipLinuxConfigStorage;
-        err     = storage->Init(CHIP_DEFAULT_CONFIG_PATH);
+#ifdef CHIP_CONFIG_MULTIPLE_INSTANCE
+        err = storage->Init(chipConfigPath);
+#else
+        err = storage->Init(CHIP_DEFAULT_CONFIG_PATH);
+#endif
     }
     else if (strcmp(ns, kConfigNamespace_ChipCounters) == 0)
     {
         storage = &gChipLinuxCountersStorage;
-        err     = storage->Init(CHIP_DEFAULT_DATA_PATH);
+#ifdef CHIP_CONFIG_MULTIPLE_INSTANCE
+        err = storage->Init(chipCounterPath);
+#else
+        err = storage->Init(CHIP_DEFAULT_DATA_PATH);
+#endif
     }
 
     SuccessOrExit(err);
