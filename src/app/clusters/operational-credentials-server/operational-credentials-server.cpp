@@ -46,6 +46,9 @@
 #include <lib/support/CodeUtils.h>
 #include <lib/support/ScopedBuffer.h>
 #include <lib/support/logging/CHIPLogging.h>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 #include <platform/CHIPDeviceLayer.h>
 #include <string.h>
 #include <trace/trace.h>
@@ -746,6 +749,9 @@ exit:
         {
             ChipLogProgress(Zcl, "OpCreds: successfully created fabric index 0x%x via AddNOC",
                             static_cast<unsigned>(newFabricIndex));
+#if CHIP_SAMSUNG_UI_LOGGING
+            IoTer::pipe_logging("step:6", IoTer::getSamsungDeviceNumber());
+#endif
         }
     }
     // No NOC response - Failed constraints
@@ -877,6 +883,9 @@ bool emberAfOperationalCredentialsClusterCertificateChainRequestCallback(
     {
         ChipLogProgress(Zcl, "OpCreds: Certificate Chain request received for PAI");
         SuccessOrExit(err = dacProvider->GetProductAttestationIntermediateCert(derBufSpan));
+#if CHIP_SAMSUNG_UI_LOGGING
+        IoTer::pipe_logging("step:5", IoTer::getSamsungDeviceNumber());
+#endif
     }
     else
     {

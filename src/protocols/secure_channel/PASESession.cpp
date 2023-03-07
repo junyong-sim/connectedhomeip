@@ -39,6 +39,9 @@
 #include <lib/support/CodeUtils.h>
 #include <lib/support/SafeInt.h>
 #include <lib/support/TypeTraits.h>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 #include <protocols/Protocols.h>
 #include <protocols/secure_channel/Constants.h>
 #include <protocols/secure_channel/StatusReport.h>
@@ -272,11 +275,11 @@ CHIP_ERROR PASESession::SendPBKDFParamRequest()
 
     const size_t mrpParamsSize = mLocalMRPConfig.HasValue() ? TLV::EstimateStructOverhead(sizeof(uint16_t), sizeof(uint16_t)) : 0;
     const size_t max_msg_len   = TLV::EstimateStructOverhead(kPBKDFParamRandomNumberSize, // initiatorRandom,
-                                                           sizeof(uint16_t),            // initiatorSessionId
-                                                           sizeof(PasscodeId),          // passcodeId,
-                                                           sizeof(uint8_t),             // hasPBKDFParameters
-                                                           mrpParamsSize                // MRP Parameters
-    );
+                                                             sizeof(uint16_t),            // initiatorSessionId
+                                                             sizeof(PasscodeId),          // passcodeId,
+                                                             sizeof(uint8_t),             // hasPBKDFParameters
+                                                             mrpParamsSize                // MRP Parameters
+      );
 
     System::PacketBufferHandle req = System::PacketBufferHandle::New(max_msg_len);
     VerifyOrReturnError(!req.IsNull(), CHIP_ERROR_NO_MEMORY);
@@ -327,6 +330,9 @@ CHIP_ERROR PASESession::HandlePBKDFParamRequest(System::PacketBufferHandle && ms
     bool hasPBKDFParameters = false;
 
     ChipLogDetail(SecureChannel, "Received PBKDF param request");
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:3", IoTer::getSamsungDeviceNumber());
+#endif
 
     SuccessOrExit(err = mCommissioningHash.AddData(ByteSpan{ msg->Start(), msg->DataLength() }));
 
@@ -741,6 +747,10 @@ CHIP_ERROR PASESession::HandleMsg3(System::PacketBufferHandle && msg)
 
     // Send confirmation to peer that we succeeded so they can start using the session.
     SendStatusReport(mExchangeCtxt, kProtocolCodeSuccess);
+
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:4", IoTer::getSamsungDeviceNumber());
+#endif
 
     Finish();
 exit:

@@ -31,6 +31,9 @@
 #include <app/util/attribute-storage.h>
 #include <lib/support/Span.h>
 #include <lib/support/logging/CHIPLogging.h>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 #include <platform/CHIPDeviceConfig.h>
 #include <platform/ConfigurationManager.h>
 #include <platform/DeviceControlServer.h>
@@ -273,7 +276,9 @@ bool emberAfGeneralCommissioningClusterCommissioningCompleteCallback(
             response.errorCode = CommissioningError::kOk;
         }
     }
-
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:12", IoTer::getSamsungDeviceNumber());
+#endif
     commandObj->AddResponse(commandPath, response);
 
     return true;

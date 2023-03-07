@@ -21,6 +21,9 @@
 #include <platform/Linux/NetworkCommissioningDriver.h>
 #include <platform/Linux/ThreadStackManagerImpl.h>
 #include <platform/ThreadStackManager.h>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 
 #include <limits>
 #include <string>
@@ -130,6 +133,9 @@ Status LinuxThreadDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, Muta
 
 void LinuxThreadDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback)
 {
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:8", IoTer::getSamsungDeviceNumber());
+#endif
     NetworkCommissioning::Status status = Status::kSuccess;
     uint8_t extpanid[kSizeExtendedPanId];
     if (!mStagingNetwork.IsCommissioned())
@@ -156,6 +162,9 @@ exit:
 
 void LinuxThreadDriver::ScanNetworks(ThreadDriver::ScanCallback * callback)
 {
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:7", IoTer::getSamsungDeviceNumber());
+#endif
     CHIP_ERROR err = DeviceLayer::ThreadStackMgrImpl().StartThreadScan(callback);
     // The ThreadScan callback will always be invoked in CHIP mainloop, which is strictly after this function
     if (err != CHIP_NO_ERROR)
