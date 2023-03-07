@@ -17,152 +17,88 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
+#include <platform/OpenThread/GenericThreadStackManagerImpl_OpenThread.h>
 
-#include <app/AttributeAccessInterface.h>
-#include <lib/support/ThreadOperationalDataset.h>
-#include <platform/Linux/GlibTypeDeleter.h>
-#include <platform/Linux/dbus/openthread/introspect.h>
-#include <platform/NetworkCommissioning.h>
-#include <platform/internal/CHIPDeviceLayerInternal.h>
-#include <platform/internal/DeviceNetworkInfo.h>
+//#include <net/openthread.h>
+#include <openthread/thread.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 namespace chip {
 namespace DeviceLayer {
 
-class ThreadStackManagerImpl : public ThreadStackManager
+class ThreadStackManager;
+class ThreadStackManagerImpl;
+
+/**
+ * Concrete implementation of the ThreadStackManager singleton object for nRF Connect platforms.
+ */
+class ThreadStackManagerImpl final : public ThreadStackManager,
+                                     public Internal::GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>
 {
-public:
-    ThreadStackManagerImpl();
+    // Allow the ThreadStackManager interface class to delegate method calls to
+    // the implementation methods provided by this class.
+    friend class ThreadStackManager;
 
-    void
-    SetNetworkStatusChangeCallback(NetworkCommissioning::Internal::BaseDriver::NetworkStatusChangeCallback * statusChangeCallback)
-    {
-        mpStatusChangeCallback = statusChangeCallback;
-    }
+    // namespace Internal {
 
-    CHIP_ERROR _InitThreadStack();
-    void _ProcessThreadActivity();
-
-    CHIP_ERROR _StartThreadTask() { return CHIP_NO_ERROR; } // Intentionally left blank
-    void _LockThreadStack() {}                              // Intentionally left blank
-    bool _TryLockThreadStack() { return false; }            // Intentionally left blank
-    void _UnlockThreadStack() {}                            // Intentionally left blank
-
-    bool _HaveRouteToAddress(const Inet::IPAddress & destAddr);
-
-    void _OnPlatformEvent(const ChipDeviceEvent * event);
-
-    CHIP_ERROR _GetThreadProvision(Thread::OperationalDataset & dataset);
-
-    CHIP_ERROR _SetThreadProvision(ByteSpan netInfo);
-
-    void _OnNetworkScanFinished(GAsyncResult * res);
-    static void _OnNetworkScanFinished(GObject * source_object, GAsyncResult * res, gpointer user_data);
-
-    CHIP_ERROR GetExtendedPanId(uint8_t extPanId[Thread::kSizeExtendedPanId]);
-
-    void _ErasePersistentInfo();
-
-    bool _IsThreadProvisioned();
-
-    bool _IsThreadEnabled();
-
-    bool _IsThreadAttached() const;
-
-    CHIP_ERROR _AttachToThreadNetwork(const Thread::OperationalDataset & dataset,
-                                      NetworkCommissioning::Internal::WirelessDriver::ConnectCallback * callback);
-
-    CHIP_ERROR _SetThreadEnabled(bool val);
-
-    void _OnThreadAttachFinished(void);
-
-    void _UpdateNetworkStatus();
-
-    static void _OnThreadBrAttachFinished(GObject * source_object, GAsyncResult * res, gpointer user_data);
-
-    ConnectivityManager::ThreadDeviceType _GetThreadDeviceType();
-
-    CHIP_ERROR _SetThreadDeviceType(ConnectivityManager::ThreadDeviceType deviceType);
-
-#if CHIP_DEVICE_CONFIG_ENABLE_SED
-    CHIP_ERROR _GetSEDIntervalsConfig(ConnectivityManager::SEDIntervalsConfig & intervalsConfig);
-    CHIP_ERROR _SetSEDIntervalsConfig(const ConnectivityManager::SEDIntervalsConfig & intervalsConfig);
-    CHIP_ERROR _RequestSEDActiveMode(bool onOff, bool delayIdle = false);
+    // Allow the generic implementation base classes to call helper methods on
+    // this class.
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+    friend Internal::GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>;
 #endif
 
-    bool _HaveMeshConnectivity();
+public:
+    // ===== Methods that implement the ThreadStackManager abstract interface.
+    CHIP_ERROR _InitThreadStack();
+    CHIP_ERROR _DeinitThreadStack();
+    otInstance *instance;
+    pthread_t threadId;
 
-    CHIP_ERROR _GetAndLogThreadStatsCounters();
+protected:
+    // ===== Methods that implement the ThreadStackManager abstract interface.
 
-    CHIP_ERROR _GetAndLogThreadTopologyMinimal();
+    CHIP_ERROR _StartThreadTask() { return CHIP_NO_ERROR; }
+    void _LockThreadStack();
+    bool _TryLockThreadStack();
+    void _UnlockThreadStack();
 
-    CHIP_ERROR _GetAndLogThreadTopologyFull();
+    // ===== Methods that override the GenericThreadStackManagerImpl_OpenThread abstract interface.
 
-    CHIP_ERROR _GetPrimary802154MACAddress(uint8_t * buf);
+    void _ProcessThreadActivity() {}
 
-    CHIP_ERROR _GetExternalIPv6Address(chip::Inet::IPAddress & addr);
+    //} // namespace Internal
 
-    CHIP_ERROR _GetPollPeriod(uint32_t & buf);
+private:
+    // ===== Members for internal use by the following friends.
 
-    CHIP_ERROR _JoinerStart();
-
-    void _SetRouterPromotion(bool val);
-
-    void _ResetThreadNetworkDiagnosticsCounts();
-
-    CHIP_ERROR _WriteThreadNetworkDiagnosticAttributeToTlv(AttributeId attributeId, app::AttributeValueEncoder & encoder);
-
-    CHIP_ERROR _StartThreadScan(NetworkCommissioning::ThreadDriver::ScanCallback * callback);
-
-    ~ThreadStackManagerImpl() = default;
+    friend ThreadStackManager & ::chip::DeviceLayer::ThreadStackMgr(void);
+    friend ThreadStackManagerImpl & ::chip::DeviceLayer::ThreadStackMgrImpl(void);
 
     static ThreadStackManagerImpl sInstance;
 
-private:
-    static constexpr char kDBusOpenThreadService[]    = "io.openthread.BorderRouter.wpan0";
-    static constexpr char kDBusOpenThreadObjectPath[] = "/io/openthread/BorderRouter/wpan0";
-
-    static constexpr char kOpenthreadDeviceRoleDisabled[] = "disabled";
-    static constexpr char kOpenthreadDeviceRoleDetached[] = "detached";
-    static constexpr char kOpenthreadDeviceRoleChild[]    = "child";
-    static constexpr char kOpenthreadDeviceRoleRouter[]   = "router";
-    static constexpr char kOpenthreadDeviceRoleLeader[]   = "leader";
-
-    static constexpr char kPropertyDeviceRole[] = "DeviceRole";
-
-    struct ThreadNetworkScanned
-    {
-        uint16_t panId;
-        uint64_t extendedPanId;
-        uint8_t networkName[16];
-        uint8_t networkNameLen;
-        uint16_t channel;
-        uint8_t version;
-        uint64_t extendedAddress;
-        int8_t rssi;
-        uint8_t lqi;
-    };
-
-    std::unique_ptr<OpenthreadIoOpenthreadBorderRouter, GObjectDeleter> mProxy;
-
-    static void OnDbusPropertiesChanged(OpenthreadIoOpenthreadBorderRouter * proxy, GVariant * changed_properties,
-                                        const gchar * const * invalidated_properties, gpointer user_data);
-    void ThreadDevcieRoleChangedHandler(const gchar * role);
-
-    Thread::OperationalDataset mDataset = {};
-
-    NetworkCommissioning::ThreadDriver::ScanCallback * mpScanCallback;
-    NetworkCommissioning::Internal::WirelessDriver::ConnectCallback * mpConnectCallback;
-    NetworkCommissioning::Internal::BaseDriver::NetworkStatusChangeCallback * mpStatusChangeCallback = nullptr;
-
-    bool mAttached;
+    // ===== Private members for use by this class only.
 };
 
-inline void ThreadStackManagerImpl::_OnThreadAttachFinished(void)
+/**
+ * Returns the public interface of the ThreadStackManager singleton object.
+ *
+ * chip applications should use this to access features of the ThreadStackManager object
+ * that are common to all platforms.
+ */
+inline ThreadStackManager & ThreadStackMgr(void)
 {
-    // stub for ThreadStackManager.h
+    return ThreadStackManagerImpl::sInstance;
+}
+
+/**
+ * Returns the platform-specific implementation of the ThreadStackManager singleton object.
+ *
+ * chip applications can use this to gain access to features of the ThreadStackManager
+ * that are specific to nRF Connect platforms.
+ */
+inline ThreadStackManagerImpl & ThreadStackMgrImpl(void)
+{
+    return ThreadStackManagerImpl::sInstance;
 }
 
 } // namespace DeviceLayer
