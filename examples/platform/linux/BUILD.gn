@@ -61,6 +61,8 @@ source_set("app-main") {
   if (chip_build_libshell) {
     defines += [ "ENABLE_CHIP_SHELL" ]
   }
+  defines +=
+      [ "SUPPORT_MULTIPLE_OT_LIBS=true" ]  #for supporting multi thread dongles
 
   public_deps = [
     ":ota-test-event-trigger",

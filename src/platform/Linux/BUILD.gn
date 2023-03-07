@@ -29,6 +29,7 @@ if (chip_use_pw_logging) {
 if (chip_enable_openthread) {
   import("//build_overrides/openthread.gni")
   import("//build_overrides/ot_br_posix.gni")
+  chip_enable_support_multiple_ot_libs = true
 }
 
 if (chip_mdns == "platform") {
@@ -129,8 +130,28 @@ static_library("Linux") {
       "ThreadStackManagerImpl.cpp",
       "ThreadStackManagerImpl.h",
     ]
+    if (chip_enable_support_multiple_ot_libs) {
+      sources += [
+        "../OpenThread/OpenThreadDL_Manager.cpp",
+        "../OpenThread/OpenThreadUtils_DL.cpp",
+      ]
+    } else {
+      sources += [ "../OpenThread/OpenThreadUtils.cpp" ]
+    }
 
     public_deps += [ "dbus/openthread" ]
+  }
+
+  cflags = [
+    "-D_NO_NETWORK_COMMISSIONING_DRIVER_",
+    "-Wno-error=null-conversion",
+  ]
+
+  if (!chip_enable_support_multiple_ot_libs) {
+    lib_dirs = [ "/usr/lib/" ]
+    libs = [ "openthread-cli" ]
+  } else {
+    cflags += [ "-DSUPPORT_MULTIPLE_OT_LIBS" ]
   }
 
   if (chip_use_pw_logging) {

@@ -32,6 +32,7 @@
 
 // Allows app options (ports) to be configured on launch of app
 #define CHIP_DEVICE_ENABLE_PORT_PARAMS 1
+#define CHIP_SAMSUNG_UI_LOGGING 1
 
 // Expose the device type in the advertisement for CI testing.
 #define CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONABLE_DEVICE_TYPE 1
