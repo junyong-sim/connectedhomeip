@@ -278,26 +278,26 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::_SetThreadEnable
     Impl()->LockThreadStack();
 
     bool isEnabled    = (OpenThreadDL_Manager::getInstance().mOtThreadGetDeviceRole(mOTInst) != OT_DEVICE_ROLE_DISABLED);
-    bool isIp6Enabled = OpenThreadDL_Manager::getInstance().mOtIp6IsEnabled(mOTInst);
+    // bool isIp6Enabled = OpenThreadDL_Manager::getInstance().mOtIp6IsEnabled(mOTInst);
 
-    if (val && !isIp6Enabled)
-    {
-        otErr = OpenThreadDL_Manager::getInstance().mOtIp6SetEnabled(mOTInst, val);
-        VerifyOrExit(otErr == OT_ERROR_NONE, );
-    }
+    // if (val && !isIp6Enabled)
+    // {
+    //     otErr = OpenThreadDL_Manager::getInstance().mOtIp6SetEnabled(mOTInst, val);
+    //     VerifyOrExit(otErr == OT_ERROR_NONE, );
+    // }
 
     if (val != isEnabled)
     {
         otErr = OpenThreadDL_Manager::getInstance().mOtThreadSetEnabled(mOTInst, val);
         VerifyOrExit(otErr == OT_ERROR_NONE, );
     }
-/* jinwon ( when processing [thread stop], [ifconfig down] isn't processed.)
-    if (!val && isIp6Enabled)
-    {
-        otErr = otIp6SetEnabled(mOTInst, val);
-        VerifyOrExit(otErr == OT_ERROR_NONE, );
-    }
-*/
+
+    // if (!val && isIp6Enabled)
+    // {
+    //     otErr = OpenThreadDL_Manager::getInstance().mOtIp6SetEnabled(mOTInst, val);
+    //     VerifyOrExit(otErr == OT_ERROR_NONE, );
+    // }
+
 exit:
     Impl()->UnlockThreadStack();
 
@@ -416,7 +416,7 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::_AttachToThreadN
     }
     else
     {
-        //    ReturnErrorOnFailure(Impl()->SetThreadEnabled(false));
+        ReturnErrorOnFailure(Impl()->SetThreadEnabled(false));
         ChipLogProgress(DeviceLayer, "JINWON GenericThreadStackManagerImpl_OpenThread::_AttachToThreadNetwork - ThreadProvision");
         ReturnErrorOnFailure(Impl()->SetThreadProvision(dataset.AsByteSpan()));
 
@@ -547,6 +547,8 @@ GenericThreadStackManagerImpl_OpenThread<ImplClass>::_StartThreadScan(NetworkCom
     }
 #endif
 
+    (void) !OpenThreadDL_Manager::getInstance().mOtThreadSetEnabled(mOTInst, false);
+
     error = MapOpenThreadError(OpenThreadDL_Manager::getInstance().mOtThreadDiscover(
         mOTInst, 0,                       /* all channels */
         OT_PANID_BROADCAST, false, false, /* disable PAN ID, EUI64 and Joiner filtering */
@@ -572,8 +574,6 @@ void GenericThreadStackManagerImpl_OpenThread<ImplClass>::_OnNetworkScanFinished
 template <class ImplClass>
 void GenericThreadStackManagerImpl_OpenThread<ImplClass>::_OnNetworkScanFinished(otActiveScanResult * aResult)
 {
-    ChipLogProgress(DeviceLayer, "GenericThreadStackManagerImpl_OpenThread::_OnNetworkScanFinished");
-
     if (aResult == nullptr) // scan completed
     {
 #if CHIP_DEVICE_CONFIG_ENABLE_SED
@@ -592,11 +592,12 @@ void GenericThreadStackManagerImpl_OpenThread<ImplClass>::_OnNetworkScanFinished
         {
             DeviceLayer::SystemLayer().ScheduleLambda([this]() {
                 Impl()->LockThreadStack();
-                (void) !OpenThreadDL_Manager::getInstance().mOtIp6SetEnabled(mOTInst, false);
+                // (void) !OpenThreadDL_Manager::getInstance().mOtIp6SetEnabled(mOTInst, false);
                 Impl()->UnlockThreadStack();
             });
         }
 
+        ChipLogProgress(DeviceLayer, "GenericThreadStackManagerImpl_OpenThread::_OnNetworkScanFinished Completed");
         if (mpScanCallback != nullptr)
         {
             DeviceLayer::SystemLayer().ScheduleLambda([this]() {
