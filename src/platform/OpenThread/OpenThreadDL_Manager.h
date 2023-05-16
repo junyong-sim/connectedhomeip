@@ -250,11 +250,9 @@ public:
 #endif
     otLinkSetPollPeriod mOtLinkSetPollPeriod;
     otInstanceErasePersistentInfo mOtInstanceErasePersistentInfo;
-#if CHIP_DEVICE_CONFIG_THREAD_FTD
     otJoinerGetState mOtJoinerGetState;
     otJoinerSetDiscerner mOtJoinerSetDiscerner;
     otJoinerStart mOtJoinerStart;
-#endif
     otDnsClientGetDefaultConfig mOtDnsClientGetDefaultConfig;
     otDnsClientSetDefaultConfig mOtDnsClientSetDefaultConfig;
     otSrpClientClearService mOtSrpClientClearService;

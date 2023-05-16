@@ -436,7 +436,7 @@ GenericThreadStackManagerImpl_OpenThread<ImplClass>::_StartThreadScan(NetworkCom
     {
         mTemporaryRxOnWhenIdle = true;
         linkMode.mRxOnWhenIdle = true;
-        OpenThreadDL_Manager::getInstance().mOtThreadSetLinkMode(mOTInst, linkMode);
+        (void) !OpenThreadDL_Manager::getInstance().mOtThreadSetLinkMode(mOTInst, linkMode);
     }
 #endif
 
@@ -474,7 +474,7 @@ void GenericThreadStackManagerImpl_OpenThread<ImplClass>::_OnNetworkScanFinished
             otLinkModeConfig linkMode = OpenThreadDL_Manager::getInstance().mOtThreadGetLinkMode(mOTInst);
             linkMode.mRxOnWhenIdle    = false;
             mTemporaryRxOnWhenIdle    = false;
-            OpenThreadDL_Manager::getInstance().mOtThreadSetLinkMode(mOTInst, linkMode);
+            (void) !OpenThreadDL_Manager::getInstance().mOtThreadSetLinkMode(mOTInst, linkMode);
         }
 #endif
 
