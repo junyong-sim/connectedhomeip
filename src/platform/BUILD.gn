@@ -42,7 +42,7 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
     chip_device_config_firmware_build_time = ""
 
     # Use OpenThread ftd or mtd library
-    chip_device_config_thread_ftd = chip_openthread_ftd
+    # chip_device_config_thread_ftd = chip_openthread_ftd
 
     # Enable including the additional data in the advertisement packets
     chip_enable_additional_data_advertising = false
@@ -101,7 +101,7 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
     defines = [
       "CHIP_DEVICE_CONFIG_ENABLE_WPA=${chip_device_config_enable_wpa}",
       "CHIP_ENABLE_OPENTHREAD=${chip_enable_openthread}",
-      "CHIP_DEVICE_CONFIG_THREAD_FTD=${chip_device_config_thread_ftd}",
+      # "CHIP_DEVICE_CONFIG_THREAD_FTD=${chip_device_config_thread_ftd}",
       "CHIP_STACK_LOCK_TRACKING_ENABLED=${chip_stack_lock_tracking_log}",
       "CHIP_STACK_LOCK_TRACKING_ERROR_FATAL=${chip_stack_lock_tracking_fatal}",
       "CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING=${chip_enable_additional_data_advertising}",
@@ -115,6 +115,37 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
       defines += [ "CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE=${chip_enable_ble}" ]
     }
 
+    if (chip_enable_openthread) {
+      defines += [
+        "CHIP_DEVICE_CONFIG_ENABLE_THREAD=1",
+        "OPENTHREAD_CONFIG_IP6_SLAAC_ENABLE=1",
+        "CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT=1",
+        "CHIP_DEVICE_CONFIG_ENABLE_THREAD_COMMISSIONABLE_DISCOVERY=1",
+        "CHIP_DEVICE_CONFIG_ENABLE_THREAD_DNS_CLIENT=1",
+      ]
+    }
+
+    if (is_fed) {
+      defines += [
+        "CHIP_DEVICE_CONFIG_THREAD_FTD=1",
+      ]
+    } else {
+      defines += [
+        "CHIP_DEVICE_CONFIG_THREAD_FTD=0",
+      ]
+    }
+    if (is_sed) {
+      defines += [
+        "CHIP_DEVICE_CONFIG_ENABLE_SED=1",
+      ]
+    }
+
+    if (is_ssed) {
+      defines += [
+        "CHIP_DEVICE_CONFIG_THREAD_SSED=1",
+      ]
+    }
+    
     if (chip_enable_nfc) {
       defines += [
         "CHIP_DEVICE_CONFIG_ENABLE_NFC=1",

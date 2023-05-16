@@ -59,4 +59,13 @@ declare_args() {
 
   # Enable fuzzer build for OSS-Fuzz
   oss_fuzz = false
+
+  # default thread type value is false
+  is_fed = false
+
+  is_sed = false
+
+  is_ssed = false
+
+  is_med = false
 }

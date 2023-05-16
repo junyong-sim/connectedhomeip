@@ -248,6 +248,7 @@ class HostBuilder(GnBuilder):
                  enable_thread=True, use_tsan=False, use_asan=False, use_ubsan=False,
                  separate_event_loop=True, fuzzing_type: HostFuzzingType = HostFuzzingType.NONE, use_clang=False,
                  interactive_mode=True, extra_tests=False, use_platform_mdns=False, enable_rpcs=False,
+                 use_fed=False, use_sed=False, use_ssed=False, use_med=False,
                  use_coverage=False, use_dmalloc=False, minmdns_address_policy=None,
                  minmdns_high_verbosity=False, imgui_ui=False, crypto_library: HostCryptoLibrary = None):
         super(HostBuilder, self).__init__(
@@ -374,6 +375,18 @@ class HostBuilder(GnBuilder):
 
         if self.app == HostApp.TESTS and fuzzing_type != HostFuzzingType.NONE:
             self.build_command = 'fuzz_tests'
+        
+        if use_fed:
+            self.extra_gn_options.append('is_fed=true')
+
+        if use_sed:
+            self.extra_gn_options.append('is_sed=true')
+
+        if use_ssed:
+            self.extra_gn_options.append('is_ssed=true')
+
+        if use_med:
+            self.extra_gn_options.append('is_med=true')
 
     def GnBuildArgs(self):
         if self.board == HostBoard.NATIVE:

@@ -56,7 +56,7 @@ declare_args() {
 }
 
 declare_args() {
-  chip_openthread_ftd = chip_enable_openthread
+  # chip_openthread_ftd = chip_enable_openthread
 
   # Enable wifi support.
   chip_enable_wifi =

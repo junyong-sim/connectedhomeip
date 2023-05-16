@@ -150,6 +150,12 @@ def BuildHostTarget():
     target.AppendModifier('rpc', enable_rpcs=True)
     target.AppendModifier('with-ui', imgui_ui=True)
 
+    if cross_compile:
+        target.AppendModifier(name="fed", use_fed=True),
+        target.AppendModifier(name="sed", use_sed=True),
+        target.AppendModifier(name="ssed", use_ssed=True),
+        target.AppendModifier(name="med", use_med=True),
+
     return target
 
 
