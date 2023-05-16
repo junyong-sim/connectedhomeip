@@ -19,6 +19,9 @@
 #pragma once
 
 #include <cstdint>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 
 namespace chip {
 
@@ -91,6 +94,10 @@ public:
      */
     bool Destroy()
     {
+#if CHIP_SAMSUNG_UI_LOGGING
+            // noti abort about dongle problem to UI App for usb reset
+            IoTer::pipe_logging("abort", IoTer::getSamsungDeviceNumber());
+#endif
         if (mState == State::Uninitialized || mState == State::Shutdown)
         {
             mState = State::Destroyed;

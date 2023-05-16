@@ -71,6 +71,9 @@
 #include <platform/DeviceInstanceInfoProvider.h>
 #include <platform/Linux/BLEManagerImpl.h>
 #include <system/TLVPacketBufferBackingStore.h>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 
 #include "BluezObjectIterator.h"
 #include "BluezObjectList.h"
@@ -214,6 +217,10 @@ static void BluezAdvStartDone(GObject * aObject, GAsyncResult * aResult, gpointe
     endpoint->mIsAdvertising = true;
 
     ChipLogDetail(DeviceLayer, "RegisterAdvertisement complete");
+
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:1:Start Matter Commissioning", IoTer::getSamsungDeviceNumber());
+#endif
 
 exit:
     BLEManagerImpl::NotifyBLEPeripheralAdvStartComplete(success == TRUE, nullptr);
@@ -948,6 +955,10 @@ static void BluezHandleNewDevice(BluezDevice1 * device, BluezEndpoint * apEndpoi
     apEndpoint->mpPeerDevicePath = g_strdup(g_dbus_proxy_get_object_path(G_DBUS_PROXY(device)));
     ChipLogDetail(DeviceLayer, "Device %s (Path: %s) Connected", conn->mpPeerAddress, apEndpoint->mpPeerDevicePath);
     g_hash_table_insert(apEndpoint->mpConnMap, g_strdup(g_dbus_proxy_get_object_path(G_DBUS_PROXY(device))), conn);
+
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:10:BLE is connected", IoTer::getSamsungDeviceNumber());
+#endif
 
 exit:
     return;

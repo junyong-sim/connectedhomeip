@@ -25,8 +25,10 @@
 #include <app/CommandHandler.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/network-commissioning/network-commissioning.h>
+#include <app/clusters/on-off-server/on-off-server.h>
 #include <app/server/Server.h>
 #include <app/util/af.h>
+#include <app/util/attribute-storage.h>
 #include <lib/support/CHIPMem.h>
 #include <new>
 #include <platform/DeviceInstanceInfoProvider.h>
@@ -55,11 +57,12 @@ using namespace chip::DeviceLayer;
 
 namespace {
 
-constexpr const char kChipEventFifoPathPrefix[] = "/tmp/chip_all_clusters_fifo_";
+constexpr const char kChipEventFifoPathPrefix[] = "/tmp/chip_all_clusters_fifo_device";
 LowPowerManager sLowPowerManager;
 NamedPipeCommands sChipNamedPipeCommands;
 AllClustersCommandDelegate sAllClustersCommandDelegate;
 chip::app::Clusters::WindowCovering::WindowCoveringManager sWindowCoveringManager;
+EmberAfDeviceType gDeviceTypes[] = { { 0, 1 } };
 
 } // namespace
 
@@ -92,6 +95,61 @@ void OnTriggerEffect(::Identify * identify)
     default:
         ChipLogProgress(Zcl, "No identifier effect");
         return;
+    }
+}
+
+void ServerClusterInit(int device_type_id)
+{
+    int d_num = static_cast<int>(LinuxDeviceOptions::GetInstance().device_num);
+    switch (device_type_id)
+    {
+    case 262: // Illuminance Sensor (Light sensor)
+    case 775: // Humidity Sensor
+    case 770: // Temperature Sensor
+        MeasurementManager::InitManager(1, d_num);
+        break;
+    case 261: // Color Dimmer Switch
+    case 269: // Extended Color Light
+    case 268: // Color Temperature Light
+        ColorControlManager::InitManager(1, d_num);
+    case 267: // Color Dimmer Plug-in unit
+    case 260: // Dimmer Switch
+    case 257: // Dimming Light
+        LevelManager::InitManager(1, d_num);
+    case 266: // OnOff Plug-in unit
+    case 259: // OnOff Switch
+    case 256: // OnOff Light
+        OnOffManager::InitManager(1, d_num);
+        // OnOffServer::Instance().initOnOffServer(1);
+        break;
+
+    case 10:
+        // doorlock server init
+        DoorLockManager::InitManager(1, d_num);
+        // DoorLockManager::NewManager(2);
+        app::Clusters::DoorLock::Attributes::LockType::Set(1, app::Clusters::DoorLock::DlLockType::kMagnetic);
+        app::Clusters::DoorLock::Attributes::LockState::Set(1, app::Clusters::DoorLock::DlLockState::kUnlocked);
+        app::Clusters::DoorLock::Attributes::ActuatorEnabled::Set(1, true);
+        app::Clusters::DoorLock::Attributes::AutoRelockTime::Set(1, 0);
+        app::Clusters::DoorLock::Attributes::OperatingMode::Set(1, app::Clusters::DoorLock::OperatingModeEnum::kNormal);
+        app::Clusters::DoorLock::Attributes::SupportedOperatingModes::Set(
+            1, app::Clusters::DoorLock::DlSupportedOperatingModes::kNormal);
+        break;
+    case 263:
+        // Motion(Occupancy) Sensor
+        MotionManager::NewManager(1, d_num);
+        break;
+    case 21:
+        // Contact Sensor server init
+        BoolManager::InitManager(1, d_num);
+        break;
+    case 514:
+        // Window Covering server init
+        WindowCoveringManager::NewManager(1, d_num);
+        break;
+    default:
+        ChipLogProgress(Zcl, "Wrong device_type_id. Can't initialize Server Clusters");
+        break;
     }
 }
 
@@ -250,7 +308,14 @@ void ApplicationInit()
         sEthernetNetworkCommissioningInstance.Init();
     }
 
-    std::string path = kChipEventFifoPathPrefix + std::to_string(getpid());
+    int device_type_id       = static_cast<int>(LinuxDeviceOptions::GetInstance().device_type_id);
+    gDeviceTypes[0].deviceId = static_cast<uint16_t>(device_type_id);
+    emberAfSetDeviceTypeList(1, Span<const EmberAfDeviceType>(gDeviceTypes));
+    // emberAfSetDeviceTypeList(2, Span<const EmberAfDeviceType>(gDeviceTypes));
+
+    ServerClusterInit(device_type_id);
+
+    std::string path = kChipEventFifoPathPrefix + std::to_string(LinuxDeviceOptions::GetInstance().device_num);
 
     if (sChipNamedPipeCommands.Start(path, &sAllClustersCommandDelegate) != CHIP_NO_ERROR)
     {

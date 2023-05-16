@@ -21,6 +21,9 @@
 #include <lib/support/CodeUtils.h>
 #include <lib/support/SafeInt.h>
 #include <lib/support/logging/CHIPLogging.h>
+#if CHIP_SAMSUNG_UI_LOGGING
+#include <lib/support/IoTer/IoTer_logging.h>
+#endif
 #include <transport/SessionManager.h>
 
 using namespace ::chip::Inet;
@@ -83,6 +86,9 @@ CHIP_ERROR CASEServer::OnMessageReceived(Messaging::ExchangeContext * ec, const 
 
     CHIP_ERROR err = InitCASEHandshake(ec);
     SuccessOrExit(err);
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:70:Start CASE Session", IoTer::getSamsungDeviceNumber());
+#endif
 
     // TODO - Enable multiple concurrent CASE session establishment
     // https://github.com/project-chip/connectedhomeip/issues/8342
@@ -169,5 +175,8 @@ void CASEServer::OnSessionEstablished(const SessionHandle & session)
     ChipLogProgress(Inet, "CASE Session established to peer: " ChipLogFormatScopedNodeId,
                     ChipLogValueScopedNodeId(session->GetPeer()));
     PrepareForSessionEstablishment(session->GetPeer());
+#if CHIP_SAMSUNG_UI_LOGGING
+    IoTer::pipe_logging("step:80:CASE Session established", IoTer::getSamsungDeviceNumber());
+#endif
 }
 } // namespace chip

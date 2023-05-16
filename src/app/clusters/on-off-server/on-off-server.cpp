@@ -166,6 +166,11 @@ EmberAfStatus OnOffServer::setOnOffValue(chip::EndpointId endpoint, chip::Comman
     if ((!currentValue && command == Commands::Off::Id) || (currentValue && command == Commands::On::Id))
     {
         emberAfOnOffClusterPrintln("Endpoint %x On/off already set to new value", endpoint);
+
+        // Temporary Bug Fix : To update UI, set current value.
+        emberAfOnOffClusterPrintln("Set current value to fix UI bug");
+        Attributes::OnOff::Set(endpoint, currentValue);
+
         return EMBER_ZCL_STATUS_SUCCESS;
     }
 

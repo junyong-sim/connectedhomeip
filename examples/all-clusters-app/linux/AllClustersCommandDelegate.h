@@ -18,6 +18,14 @@
 
 #pragma once
 
+#include "Manager/BoolManager.h"
+#include "Manager/ColorControlManager.h"
+#include "Manager/DoorLockManager.h"
+#include "Manager/LevelManager.h"
+#include "Manager/MeasurementManager.h"
+#include "Manager/MotionManager.h"
+#include "Manager/OnOffManager.h"
+#include "Manager/WindowCoveringManager.h"
 #include "NamedPipeCommands.h"
 
 #include <json/json.h>
@@ -88,6 +96,51 @@ private:
      * sequence, after it has been detected that the sequence has ended.
      */
     void OnSwitchMultiPressCompleteHandler(uint8_t previousPosition, uint8_t count);
+
+    /**
+     * Should be called when input on/off commands
+     */
+    void OnSamsungOnOffSignalHandler(uint8_t onoff);
+
+    /**
+     * Should be called when input level commands
+     */
+    void OnSamsungLevelSignalHandler(uint8_t level);
+
+    /**
+     * Should be called when input Bool commands
+     */
+    void OnSamsungBoolSignalHandler(uint8_t boolstate);
+
+    /**
+     * Should be called when input DoorLock commands
+     */
+    void OnSamsungDoorLockSignalHandler(uint8_t lockstate);
+
+    /**
+     * Should be called when input Temperature commands
+     */
+    void OnSamsungMeasurementSignalHandler(int16_t type, int32_t value);
+
+    /**
+     * Should be called when input Color Temperature commands
+    */
+    void OnSamsungColorTemperatureSignalHandler(uint16_t value);
+
+    /**
+     * Should be called when input occupancy commands
+     */
+    void OnSamsungOccupancySignalHandler(uint8_t state);
+
+    /**
+     * Should be called when input window covering commands
+     */
+    void OnSamsungWindowCoveringSignalHandler(std::string key, chip::Percent100ths value);
+
+    /**
+     * forwarding state to Pipe of UI App
+     */
+    void OnSamsungPipeLoggingHandler(uint8_t step);
 };
 
 class AllClustersCommandDelegate : public NamedPipeCommandDelegate

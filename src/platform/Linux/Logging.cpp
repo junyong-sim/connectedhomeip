@@ -10,6 +10,7 @@
 #include <cstring>
 #include <sys/syscall.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #if CHIP_USE_PW_LOGGING
@@ -38,18 +39,27 @@ namespace Platform {
 void ENFORCE_FORMAT(3, 0) LogV(const char * module, uint8_t category, const char * msg, va_list v)
 {
     struct timeval tv;
+    time_t nowtime;
+    struct tm * nowtm;
+    char tmbuf[64], buf[64];
 
     // Should not fail per man page of gettimeofday(), but failed to get time is not a fatal error in log. The bad time value will
     // indicate the error occurred during getting time.
     gettimeofday(&tv, nullptr);
-
+    nowtime = tv.tv_sec;
+    nowtm   = localtime(&nowtime);
+    strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
+    snprintf(buf, sizeof buf, "%s.%06ld", tmbuf, tv.tv_usec);
 #if !CHIP_USE_PW_LOGGING
     // Lock standard output, so a single log line will not be corrupted in case
     // where multiple threads are using logging subsystem at the same time.
     flockfile(stdout);
 
-    printf("[%" PRIu64 ".%06" PRIu64 "][%lld:%lld] CHIP:%s: ", static_cast<uint64_t>(tv.tv_sec), static_cast<uint64_t>(tv.tv_usec),
-           static_cast<long long>(syscall(SYS_getpid)), static_cast<long long>(syscall(SYS_gettid)), module);
+    // printf("[%" PRIu64 ".%06" PRIu64 "][%lld:%lld] CHIP:%s: ", static_cast<uint64_t>(tv.tv_sec),
+    // static_cast<uint64_t>(tv.tv_usec),
+    //        static_cast<long long>(syscall(SYS_getpid)), static_cast<long long>(syscall(SYS_gettid)), module);
+    printf("[%s][%lld:%lld] CHIP:%s: ", buf, static_cast<long long>(syscall(SYS_getpid)),
+           static_cast<long long>(syscall(SYS_gettid)), module);
     vprintf(msg, v);
     printf("\n");
     fflush(stdout);

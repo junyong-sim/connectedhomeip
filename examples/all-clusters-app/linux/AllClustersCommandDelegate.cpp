@@ -19,6 +19,7 @@
 #include "AllClustersCommandDelegate.h"
 
 #include <app-common/zap-generated/att-storage.h>
+#include <app-common/zap-generated/attribute-type.h>
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/clusters/general-diagnostics-server/general-diagnostics-server.h>
 #include <app/clusters/software-diagnostics-server/software-diagnostics-server.h>
@@ -142,6 +143,82 @@ void AllClustersAppCommandHandler::HandleCommand(intptr_t context)
     {
         self->OnRebootSignalHandler(BootReasonType::kSoftwareReset);
     }
+    else if (name == "Onoff")
+    {
+        uint8_t onoff = static_cast<uint8_t>(self->mJsonValue["onoff"].asUInt());
+        self->OnSamsungOnOffSignalHandler(onoff);
+    }
+    else if (name == "Level")
+    {
+        uint8_t level = static_cast<uint8_t>(self->mJsonValue["level"].asUInt());
+        self->OnSamsungLevelSignalHandler(level);
+    }
+    else if (name == "Lockstate")
+    {
+        uint8_t lockstate = static_cast<uint8_t>(self->mJsonValue["lockstate"].asUInt());
+        self->OnSamsungDoorLockSignalHandler(lockstate);
+    }
+    else if (name == "Bool")
+    {
+        uint8_t state = static_cast<uint8_t>(self->mJsonValue["bool"].asUInt());
+        self->OnSamsungBoolSignalHandler(state);
+    }
+    else if (name == "Measurement")
+    {
+        int value = 0;
+        if (self->mJsonValue["temp"])
+        {
+            value = static_cast<int>(self->mJsonValue["temp"].asInt());
+            self->OnSamsungMeasurementSignalHandler(1, value);
+        }
+        else if (self->mJsonValue["humid"])
+        {
+            value = static_cast<int>(self->mJsonValue["humid"].asInt());
+            self->OnSamsungMeasurementSignalHandler(2, value);
+        }
+        else if (self->mJsonValue["illum"])
+        {
+            value = static_cast<int>(self->mJsonValue["illum"].asInt());
+            self->OnSamsungMeasurementSignalHandler(3, value);
+        }
+        else
+            ChipLogError(NotSpecified, "Unhandled command: Should never happens");
+    }
+    else if (name == "Colortemp")
+    {
+        uint16_t value = static_cast<uint16_t>(self->mJsonValue["colortemp"].asUInt());
+        self->OnSamsungColorTemperatureSignalHandler(value);
+    }
+    else if (name == "Occupancy")
+    {
+        uint8_t state = static_cast<uint8_t>(self->mJsonValue["occupancy"].asUInt());
+        self->OnSamsungOccupancySignalHandler(state);
+    }
+    else if (name == "WindowCovering")
+    {
+        std::string type;
+        chip::Percent100ths value = 0;
+        if (self->mJsonValue[WindowCoveringManager::TARGET_POSITION])
+        {
+            type  = WindowCoveringManager::TARGET_POSITION;
+            value = static_cast<chip::Percent100ths>(self->mJsonValue[WindowCoveringManager::TARGET_POSITION].asUInt());
+        }
+        else if (self->mJsonValue[WindowCoveringManager::CURRENT_POSITION])
+        {
+            type  = WindowCoveringManager::CURRENT_POSITION;
+            value = static_cast<chip::Percent100ths>(self->mJsonValue[WindowCoveringManager::CURRENT_POSITION].asUInt());
+        }
+        if (!type.empty())
+        {
+            self->OnSamsungWindowCoveringSignalHandler(type, value);
+        }
+    }
+    else if (name == "PowerOff")
+    {
+        DeviceLayer::ThreadStackMgr().DeinitThreadStack();
+        ChipLogError(NotSpecified, "call StopEventLoopTask");
+        DeviceLayer::PlatformMgr().StopEventLoopTask();
+    }
     else
     {
         ChipLogError(NotSpecified, "Unhandled command: Should never happens");
@@ -149,6 +226,99 @@ void AllClustersAppCommandHandler::HandleCommand(intptr_t context)
 
 exit:
     Platform::Delete(self);
+}
+
+void AllClustersAppCommandHandler::OnSamsungOnOffSignalHandler(uint8_t onoff)
+{
+    int endpoint = 1;
+    bool value   = (onoff > 0) ? true : false;
+    bool err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { OnOffManager::SetOnOff(endpoint, value); }) == CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set OnOff Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungLevelSignalHandler(uint8_t level)
+{
+    int endpoint = 1;
+    int value    = static_cast<int>(level);
+    bool err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { LevelManager::SetLevel(endpoint, value); }) == CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set Level Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungBoolSignalHandler(uint8_t boolstate)
+{
+    int endpoint = 1;
+    bool value   = (boolstate > 0) ? true : false;
+    bool err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { BoolManager::SetBooleanState(endpoint, value); }) == CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set Bool Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungDoorLockSignalHandler(uint8_t lockstate)
+{
+    int endpoint = 1;
+    int value    = static_cast<int>(lockstate);
+    bool err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { DoorLockManager::SetLockState(endpoint, value); }) == CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set lockstate Endpoint Error");
+    }
+}
+void AllClustersAppCommandHandler::OnSamsungMeasurementSignalHandler(int16_t type, int value)
+{
+    int endpoint = 1;
+    bool err     = (DeviceLayer::SystemLayer().ScheduleLambda(
+                    [endpoint, type, value] { MeasurementManager::SetMeasuredValue(endpoint, type, value); }) == CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set Measurement Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungColorTemperatureSignalHandler(uint16_t value)
+{
+    int endpoint = 1;
+    bool err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { ColorControlManager::SetColorTemperature(endpoint, value); }) == CHIP_NO_ERROR);
+    if (err == false) {
+        ChipLogError(NotSpecified, "Set ColorTemperature Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungOccupancySignalHandler(uint8_t state)
+{
+    int endpoint = 1;
+    bool err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { DoorLockManager::SetLockState(endpoint, value); }) == CHIP_NO_ERROR);
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set Motion Endpoint Error");
+    }
+}
+
+void AllClustersAppCommandHandler::OnSamsungWindowCoveringSignalHandler(std::string key, chip::Percent100ths value)
+{
+    chip::EndpointId endpoint = 1;
+    bool err                  = true;
+    if (key == WindowCoveringManager::TARGET_POSITION)
+    {
+        err = (DeviceLayer::SystemLayer().ScheduleLambda(
+                   [endpoint, value] { WindowCoveringManager::SetTargetPosition(endpoint, value); }) == CHIP_NO_ERROR);
+    }
+    else if (key == WindowCoveringManager::CURRENT_POSITION)
+    {
+        err = (DeviceLayer::SystemLayer().ScheduleLambda(
+                   [endpoint, value] { WindowCoveringManager::SetCurrentPosition(endpoint, value); }) == CHIP_NO_ERROR);
+    }
+    if (err == false)
+    {
+        ChipLogError(NotSpecified, "Set Motion Endpoint Error");
+    }
 }
 
 bool AllClustersAppCommandHandler::IsClusterPresentOnAnyEndpoint(ClusterId clusterId)

@@ -78,6 +78,11 @@ enum
     kOptionCSRResponseCSRExistingKeyPair                = 0x101e,
     kDeviceOption_TestEventTriggerEnableKey             = 0x101f,
     kCommissionerOption_FabricID                        = 0x1020,
+    kDeviceOption_DeviceID                              = 0x1021,
+    kDeviceOption_ThreadVersion                         = 0x1022,
+    kDeviceOption_ComPort                               = 0x1023,
+    kDeviceOption_ThreadDebugLevel                      = 0x1024,
+    kDeviceOption_DeviceNum                             = 0x1025,
 };
 
 constexpr unsigned kAppUsageLength = 64;
@@ -95,6 +100,11 @@ OptionDef sDeviceOptionDefs[] = {
     { "version", kArgumentRequired, kDeviceOption_Version },
     { "vendor-id", kArgumentRequired, kDeviceOption_VendorID },
     { "product-id", kArgumentRequired, kDeviceOption_ProductID },
+    { "device-id", kArgumentRequired, kDeviceOption_DeviceID },
+    { "thread-version", kArgumentRequired, kDeviceOption_ThreadVersion },
+    { "com-port", kArgumentRequired, kDeviceOption_ComPort },
+    { "thread-debug", kArgumentRequired, kDeviceOption_ThreadDebugLevel },
+    { "device-num", kArgumentRequired, kDeviceOption_DeviceNum },
     { "custom-flow", kArgumentRequired, kDeviceOption_CustomFlow },
     { "capabilities", kArgumentRequired, kDeviceOption_Capabilities },
     { "discriminator", kArgumentRequired, kDeviceOption_Discriminator },
@@ -155,6 +165,24 @@ const char * sDeviceOptionHelp =
     "\n"
     "  --product-id <id>\n"
     "       The Product ID is specified by vendor.\n"
+    "\n"
+    "  --device-id <id>\n"
+    "       The Device ID is device type id. default is 256(Light bulb). by DOOHO\n"
+    "\n"
+    "  --thread-version <default(1.3) = 0 | custom = 2>\n"
+    "       Select thread version. if you want to apply default version(1.3), skip this.\n"
+    "       if you want to apply custom version, prepare /usr/lib/libopenthread-cli.so.1\n"
+    "       then use the value of 2. by DOOHO\n"
+    "\n"
+    "  --com-port <ttyACM0~N | ttyUSB0~N>\n"
+    "       Select Com port like ttyACM0 or ttyUSB0. by DOOHO\n"
+    "\n"
+    "  --thread-debug\n"
+    "       Configure for Thread debug level.\n"
+    "       DEBUG:5, INFO:4 ... default is 5. by DOOHO\n"
+    "\n"
+    "  --device-num <0~9>\n"
+    "       device number. default is 0. by DOOHO\n"
     "\n"
     "  --custom-flow <Standard = 0 | UserActionRequired = 1 | Custom = 2>\n"
     "       A 2-bit unsigned enumeration specifying manufacturer-specific custom flow options.\n"
@@ -289,6 +317,27 @@ bool HandleOption(const char * aProgram, OptionSet * aOptions, int aIdentifier, 
 
     case kDeviceOption_ProductID:
         LinuxDeviceOptions::GetInstance().payload.productID = static_cast<uint16_t>(atoi(aValue));
+        break;
+
+    case kDeviceOption_DeviceID:
+        LinuxDeviceOptions::GetInstance().device_type_id = static_cast<uint16_t>(atoi(aValue));
+        break;
+
+    case kDeviceOption_ThreadVersion:
+        LinuxDeviceOptions::GetInstance().threadVersion = aValue;
+        break;
+
+    case kDeviceOption_ComPort:
+        LinuxDeviceOptions::GetInstance().comPort = aValue;
+        break;
+
+    case kDeviceOption_ThreadDebugLevel:
+        LinuxDeviceOptions::GetInstance().threadDebugLevel = static_cast<uint16_t>(atoi(aValue));
+        ;
+        break;
+
+    case kDeviceOption_DeviceNum:
+        LinuxDeviceOptions::GetInstance().device_num = static_cast<uint16_t>(atoi(aValue));
         break;
 
     case kDeviceOption_CustomFlow:

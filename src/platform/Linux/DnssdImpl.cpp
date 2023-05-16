@@ -819,29 +819,69 @@ void MdnsAvahi::HandleResolve(AvahiServiceResolver * resolver, AvahiIfIndex inte
 
 CHIP_ERROR ChipDnssdInit(DnssdAsyncReturnCallback initCallback, DnssdAsyncReturnCallback errorCallback, void * context)
 {
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     return MdnsAvahi::GetInstance().Init(initCallback, errorCallback, context);
+#else
+    ChipLogDetail(DeviceLayer, "ChipDnssdInit - Thread");
+    ReturnErrorOnFailure(DeviceLayer::ThreadStackMgr().SetSrpDnsCallbacks(initCallback, errorCallback, context));
+
+    uint8_t macBuffer[DeviceLayer::ConfigurationManager::kPrimaryMACAddressLength];
+    MutableByteSpan mac(macBuffer);
+    char hostname[kHostNameMaxLength + 1] = "";
+    ReturnErrorOnFailure(DeviceLayer::ConfigurationMgr().GetPrimaryMACAddress(mac));
+    MakeHostName(hostname, sizeof(hostname), mac);
+
+    DeviceLayer::ThreadStackMgr().ClearSrpHost(hostname);
+    return CHIP_NO_ERROR;
+#endif
 }
 
 void ChipDnssdShutdown()
 {
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     MdnsAvahi::GetInstance().Shutdown();
+#endif
 }
 
 CHIP_ERROR ChipDnssdPublishService(const DnssdService * service, DnssdPublishCallback callback, void * context)
 {
     VerifyOrReturnError(service != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(callback != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
+
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     if (strcmp(service->mHostName, "") != 0)
     {
         ReturnErrorOnFailure(MdnsAvahi::GetInstance().SetHostname(service->mHostName));
     }
 
     return MdnsAvahi::GetInstance().PublishService(*service, callback, context);
+#else
+    ChipLogDetail(DeviceLayer, "JYSIM DOOHO DnssdImpl ChipDnssdPublishService - Thread");
+    ReturnErrorCodeIf(service == nullptr, CHIP_ERROR_INVALID_ARGUMENT);
+    if (strcmp(service->mHostName, "") != 0)
+    {
+        ReturnErrorOnFailure(DeviceLayer::ThreadStackMgr().SetupSrpHost(service->mHostName));
+    }
+
+    char tServiceType[chip::Dnssd::kDnssdTypeAndProtocolMaxSize + 1];
+    snprintf(tServiceType, sizeof(tServiceType), "%s.%s", service->mType, GetProtocolString(service->mProtocol));
+
+    Span<const char * const> tSubTypes(service->mSubTypes, service->mSubTypeSize);
+    Span<const TextEntry> textEntries(service->mTextEntries, service->mTextEntrySize);
+    DeviceLayer::ThreadStackMgr().AddSrpService(service->mName, tServiceType, service->mPort, tSubTypes, textEntries);
+    return CHIP_NO_ERROR;
+#endif
 }
 
 CHIP_ERROR ChipDnssdRemoveServices()
 {
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     return MdnsAvahi::GetInstance().StopPublish();
+#else
+    ChipLogDetail(DeviceLayer, "JYSIM DOOHO DnssdImpl ChipDnssdRemoveServices - Thread");
+    DeviceLayer::ThreadStackMgr().InvalidateAllSrpServices();
+    return CHIP_NO_ERROR;
+#endif
 }
 
 CHIP_ERROR ChipDnssdFinalizeServiceUpdate()
@@ -853,8 +893,12 @@ CHIP_ERROR ChipDnssdBrowse(const char * type, DnssdServiceProtocol protocol, chi
                            chip::Inet::InterfaceId interface, DnssdBrowseCallback callback, void * context,
                            intptr_t * browseIdentifier)
 {
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     *browseIdentifier = reinterpret_cast<intptr_t>(nullptr);
     return MdnsAvahi::GetInstance().Browse(type, protocol, addressType, interface, callback, context);
+#else
+    return CHIP_NO_ERROR;
+#endif
 }
 
 CHIP_ERROR ChipDnssdStopBrowse(intptr_t browseIdentifier)
@@ -868,8 +912,12 @@ CHIP_ERROR ChipDnssdResolve(DnssdService * browseResult, chip::Inet::InterfaceId
 {
     VerifyOrReturnError(browseResult != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
 
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     return MdnsAvahi::GetInstance().Resolve(browseResult->mName, browseResult->mType, browseResult->mProtocol,
                                             browseResult->mAddressType, Inet::IPAddressType::kAny, interface, callback, context);
+#else
+    return CHIP_NO_ERROR;
+#endif
 }
 
 void ChipDnssdResolveNoLongerNeeded(const char * instanceName) {}
