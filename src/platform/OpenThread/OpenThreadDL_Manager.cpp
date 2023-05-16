@@ -116,58 +116,58 @@ void OpenThreadDL_Manager::lookup()
     mOtThreadDiscover               = (otThreadDiscover) getSymbol("otThreadDiscover");
     mOtThreadGetLinkMode            = (otThreadGetLinkMode) getSymbol("otThreadGetLinkMode");
 #if CHIP_DEVICE_CONFIG_THREAD_FTD
-    mOtThreadIsRouterEligible       = (otThreadIsRouterEligible) getSymbol("otThreadIsRouterEligible");
-    mOtThreadSetRouterEligible      = (otThreadSetRouterEligible) getSymbol("otThreadSetRouterEligible");
+    mOtThreadIsRouterEligible  = (otThreadIsRouterEligible) getSymbol("otThreadIsRouterEligible");
+    mOtThreadSetRouterEligible = (otThreadSetRouterEligible) getSymbol("otThreadSetRouterEligible");
 #endif
-    mOtThreadSetLinkMode            = (otThreadSetLinkMode) getSymbol("otThreadSetLinkMode");
-    mOtThreadGetNetworkKey          = (otThreadGetNetworkKey) getSymbol("otThreadGetNetworkKey");
-    mOtThreadGetNextNeighborInfo    = (otThreadGetNextNeighborInfo) getSymbol("otThreadGetNextNeighborInfo");
-    mOtDatasetGetActive             = (otDatasetGetActive) getSymbol("otDatasetGetActive");
-    mOtLinkGetCounters              = (otLinkGetCounters) getSymbol("otLinkGetCounters");
-    mOtThreadGetIp6Counters         = (otThreadGetIp6Counters) getSymbol("otThreadGetIp6Counters");
-    mOtThreadGetRloc16              = (otThreadGetRloc16) getSymbol("otThreadGetRloc16");
-    mOtThreadGetLeaderRouterId      = (otThreadGetLeaderRouterId) getSymbol("otThreadGetLeaderRouterId");
-    mOtThreadGetParentAverageRssi   = (otThreadGetParentAverageRssi) getSymbol("otThreadGetParentAverageRssi");
-    mOtThreadGetParentLastRssi      = (otThreadGetParentLastRssi) getSymbol("otThreadGetParentLastRssi");
-    mOtThreadGetPartitionId         = (otThreadGetPartitionId) getSymbol("otThreadGetPartitionId");
-    mOtPlatRadioGetIeeeEui64        = (otPlatRadioGetIeeeEui64) getSymbol("otPlatRadioGetIeeeEui64");
-    mOtLinkGetExtendedAddress       = (otLinkGetExtendedAddress) getSymbol("otLinkGetExtendedAddress");
-    mOtPlatRadioGetRssi             = (otPlatRadioGetRssi) getSymbol("otPlatRadioGetRssi");
-    mOtThreadGetLeaderRloc          = (otThreadGetLeaderRloc) getSymbol("otThreadGetLeaderRloc");
-    mOtThreadGetLeaderWeight        = (otThreadGetLeaderWeight) getSymbol("otThreadGetLeaderWeight");
+    mOtThreadSetLinkMode          = (otThreadSetLinkMode) getSymbol("otThreadSetLinkMode");
+    mOtThreadGetNetworkKey        = (otThreadGetNetworkKey) getSymbol("otThreadGetNetworkKey");
+    mOtThreadGetNextNeighborInfo  = (otThreadGetNextNeighborInfo) getSymbol("otThreadGetNextNeighborInfo");
+    mOtDatasetGetActive           = (otDatasetGetActive) getSymbol("otDatasetGetActive");
+    mOtLinkGetCounters            = (otLinkGetCounters) getSymbol("otLinkGetCounters");
+    mOtThreadGetIp6Counters       = (otThreadGetIp6Counters) getSymbol("otThreadGetIp6Counters");
+    mOtThreadGetRloc16            = (otThreadGetRloc16) getSymbol("otThreadGetRloc16");
+    mOtThreadGetLeaderRouterId    = (otThreadGetLeaderRouterId) getSymbol("otThreadGetLeaderRouterId");
+    mOtThreadGetParentAverageRssi = (otThreadGetParentAverageRssi) getSymbol("otThreadGetParentAverageRssi");
+    mOtThreadGetParentLastRssi    = (otThreadGetParentLastRssi) getSymbol("otThreadGetParentLastRssi");
+    mOtThreadGetPartitionId       = (otThreadGetPartitionId) getSymbol("otThreadGetPartitionId");
+    mOtPlatRadioGetIeeeEui64      = (otPlatRadioGetIeeeEui64) getSymbol("otPlatRadioGetIeeeEui64");
+    mOtLinkGetExtendedAddress     = (otLinkGetExtendedAddress) getSymbol("otLinkGetExtendedAddress");
+    mOtPlatRadioGetRssi           = (otPlatRadioGetRssi) getSymbol("otPlatRadioGetRssi");
+    mOtThreadGetLeaderRloc        = (otThreadGetLeaderRloc) getSymbol("otThreadGetLeaderRloc");
+    mOtThreadGetLeaderWeight      = (otThreadGetLeaderWeight) getSymbol("otThreadGetLeaderWeight");
 #if CHIP_DEVICE_CONFIG_THREAD_FTD
-    mOtThreadGetLocalLeaderWeight   = (otThreadGetLocalLeaderWeight) getSymbol("otThreadGetLocalLeaderWeight");
+    mOtThreadGetLocalLeaderWeight = (otThreadGetLocalLeaderWeight) getSymbol("otThreadGetLocalLeaderWeight");
 #endif
-    mOtNetDataGet                   = (otNetDataGet) getSymbol("otNetDataGet");
-    mOtNetDataGetVersion            = (otNetDataGetVersion) getSymbol("otNetDataGetVersion");
-    mOtNetDataGetStableVersion      = (otNetDataGetStableVersion) getSymbol("otNetDataGetStableVersion");
+    mOtNetDataGet              = (otNetDataGet) getSymbol("otNetDataGet");
+    mOtNetDataGetVersion       = (otNetDataGetVersion) getSymbol("otNetDataGetVersion");
+    mOtNetDataGetStableVersion = (otNetDataGetStableVersion) getSymbol("otNetDataGetStableVersion");
 #if CHIP_DEVICE_CONFIG_THREAD_FTD
-    mOtThreadGetChildInfoById       = (otThreadGetChildInfoById) getSymbol("otThreadGetChildInfoById");
+    mOtThreadGetChildInfoById = (otThreadGetChildInfoById) getSymbol("otThreadGetChildInfoById");
 #endif
-    mOtIp6GetUnicastAddresses       = (otIp6GetUnicastAddresses) getSymbol("otIp6GetUnicastAddresses");
-    mOtLinkGetChannel               = (otLinkGetChannel) getSymbol("otLinkGetChannel");
-    mOtThreadGetNetworkName         = (otThreadGetNetworkName) getSymbol("otThreadGetNetworkName");
-    mOtLinkGetPanId                 = (otLinkGetPanId) getSymbol("otLinkGetPanId");
-    mOtThreadGetExtendedPanId       = (otThreadGetExtendedPanId) getSymbol("otThreadGetExtendedPanId");
-    mOtThreadGetMeshLocalPrefix     = (otThreadGetMeshLocalPrefix) getSymbol("otThreadGetMeshLocalPrefix");
+    mOtIp6GetUnicastAddresses   = (otIp6GetUnicastAddresses) getSymbol("otIp6GetUnicastAddresses");
+    mOtLinkGetChannel           = (otLinkGetChannel) getSymbol("otLinkGetChannel");
+    mOtThreadGetNetworkName     = (otThreadGetNetworkName) getSymbol("otThreadGetNetworkName");
+    mOtLinkGetPanId             = (otLinkGetPanId) getSymbol("otLinkGetPanId");
+    mOtThreadGetExtendedPanId   = (otThreadGetExtendedPanId) getSymbol("otThreadGetExtendedPanId");
+    mOtThreadGetMeshLocalPrefix = (otThreadGetMeshLocalPrefix) getSymbol("otThreadGetMeshLocalPrefix");
 #if CHIP_DEVICE_CONFIG_THREAD_FTD
-    mOtThreadGetMaxRouterId         = (otThreadGetMaxRouterId) getSymbol("otThreadGetMaxRouterId");
-    mOtThreadGetRouterInfo          = (otThreadGetRouterInfo) getSymbol("otThreadGetRouterInfo");
+    mOtThreadGetMaxRouterId = (otThreadGetMaxRouterId) getSymbol("otThreadGetMaxRouterId");
+    mOtThreadGetRouterInfo  = (otThreadGetRouterInfo) getSymbol("otThreadGetRouterInfo");
 #endif
-    mOtThreadGetParentInfo          = (otThreadGetParentInfo) getSymbol("otThreadGetParentInfo");
-    mOtThreadGetMleCounters         = (otThreadGetMleCounters) getSymbol("otThreadGetMleCounters");
-    mOtLinkGetPollPeriod            = (otLinkGetPollPeriod) getSymbol("otLinkGetPollPeriod");
-    mOtIp6IsEnabled                 = (otIp6IsEnabled) getSymbol("otIp6IsEnabled");
+    mOtThreadGetParentInfo  = (otThreadGetParentInfo) getSymbol("otThreadGetParentInfo");
+    mOtThreadGetMleCounters = (otThreadGetMleCounters) getSymbol("otThreadGetMleCounters");
+    mOtLinkGetPollPeriod    = (otLinkGetPollPeriod) getSymbol("otLinkGetPollPeriod");
+    mOtIp6IsEnabled         = (otIp6IsEnabled) getSymbol("otIp6IsEnabled");
 #if CHIP_DEVICE_CONFIG_THREAD_SSED
     mOtLinkCslGetPeriod = (otLinkCslGetPeriod) getSymbol("otLinkCslGetPeriod");
     mOtLinkCslSetPeriod = (otLinkCslSetPeriod) getSymbol("otLinkCslSetPeriod");
 #endif
-    mOtLinkSetPollPeriod               = (otLinkSetPollPeriod) getSymbol("otLinkSetPollPeriod");
-    mOtInstanceErasePersistentInfo     = (otInstanceErasePersistentInfo) getSymbol("otInstanceErasePersistentInfo");
+    mOtLinkSetPollPeriod           = (otLinkSetPollPeriod) getSymbol("otLinkSetPollPeriod");
+    mOtInstanceErasePersistentInfo = (otInstanceErasePersistentInfo) getSymbol("otInstanceErasePersistentInfo");
 #if CHIP_DEVICE_CONFIG_THREAD_FTD
-    mOtJoinerGetState                  = (otJoinerGetState) getSymbol("otJoinerGetState");
-    mOtJoinerSetDiscerner              = (otJoinerSetDiscerner) getSymbol("otJoinerSetDiscerner");
-    mOtJoinerStart                     = (otJoinerStart) getSymbol("otJoinerStart");
+    mOtJoinerGetState     = (otJoinerGetState) getSymbol("otJoinerGetState");
+    mOtJoinerSetDiscerner = (otJoinerSetDiscerner) getSymbol("otJoinerSetDiscerner");
+    mOtJoinerStart        = (otJoinerStart) getSymbol("otJoinerStart");
 #endif
     mOtDnsClientGetDefaultConfig       = (otDnsClientGetDefaultConfig) getSymbol("otDnsClientGetDefaultConfig");
     mOtDnsClientSetDefaultConfig       = (otDnsClientSetDefaultConfig) getSymbol("otDnsClientSetDefaultConfig");
@@ -190,6 +190,8 @@ void OpenThreadDL_Manager::lookup()
     mOtDnsServiceResponseGetServiceName = (otDnsServiceResponseGetServiceName) getSymbol("otDnsServiceResponseGetServiceName");
     mOtDnsServiceResponseGetServiceInfo = (otDnsServiceResponseGetServiceInfo) getSymbol("otDnsServiceResponseGetServiceInfo");
     mOtDnsClientResolveService          = (otDnsClientResolveService) getSymbol("otDnsClientResolveService");
+    mOtDnsClientResolveAddress          = (otDnsClientResolveAddress) getSymbol("otDnsClientResolveAddress");
+    mOtDnsAddressResponseGetAddress     = (otDnsAddressResponseGetAddress) getSymbol("otDnsAddressResponseGetAddress");
     mOtMessageRead                      = (otMessageRead) getSymbol("otMessageRead");
     mOtMessageGetLength                 = (otMessageGetLength) getSymbol("otMessageGetLength");
 }

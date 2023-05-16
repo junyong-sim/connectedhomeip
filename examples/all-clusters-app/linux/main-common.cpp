@@ -61,7 +61,7 @@ constexpr const char kChipEventFifoPathPrefix[] = "/tmp/chip_all_clusters_fifo_d
 LowPowerManager sLowPowerManager;
 NamedPipeCommands sChipNamedPipeCommands;
 AllClustersCommandDelegate sAllClustersCommandDelegate;
-chip::app::Clusters::WindowCovering::WindowCoveringManager sWindowCoveringManager;
+//chip::app::Clusters::WindowCovering::WindowCoveringManager sWindowCoveringManager;
 EmberAfDeviceType gDeviceTypes[] = { { 0, 1 } };
 
 } // namespace
@@ -112,10 +112,12 @@ void ServerClusterInit(int device_type_id)
     case 269: // Extended Color Light
     case 268: // Color Temperature Light
         ColorControlManager::InitManager(1, d_num);
+        OT_FALL_THROUGH;
     case 267: // Color Dimmer Plug-in unit
     case 260: // Dimmer Switch
     case 257: // Dimming Light
         LevelManager::InitManager(1, d_num);
+        OT_FALL_THROUGH;
     case 266: // OnOff Plug-in unit
     case 259: // OnOff Switch
     case 256: // OnOff Light
@@ -345,9 +347,9 @@ void emberAfLowPowerClusterInitCallback(EndpointId endpoint)
     chip::app::Clusters::LowPower::SetDefaultDelegate(endpoint, &sLowPowerManager);
 }
 
-void emberAfWindowCoveringClusterInitCallback(chip::EndpointId endpoint)
-{
-    sWindowCoveringManager.Init(endpoint);
-    chip::app::Clusters::WindowCovering::SetDefaultDelegate(endpoint, &sWindowCoveringManager);
-    chip::app::Clusters::WindowCovering::ConfigStatusUpdateFeatures(endpoint);
-}
+// void emberAfWindowCoveringClusterInitCallback(chip::EndpointId endpoint)
+// {
+//     sWindowCoveringManager.Init(endpoint);
+//     chip::app::Clusters::WindowCovering::SetDefaultDelegate(endpoint, &sWindowCoveringManager);
+//     chip::app::Clusters::WindowCovering::ConfigStatusUpdateFeatures(endpoint);
+// }

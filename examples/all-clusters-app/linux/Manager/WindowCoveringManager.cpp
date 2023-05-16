@@ -54,7 +54,7 @@ void WindowCoveringManager::init(EndpointId endpoint)
 {
     chip::BitMask<Mode> mode;
 
-    SetFeatureMap(endpoint, chip::to_underlying(Feature::kPositionAwareLift) | chip::to_underlying(Feature::kLift));
+    SetFeatureMap(endpoint, chip::to_underlying(WindowCoveringFeature::kPositionAwareLift) | chip::to_underlying(WindowCoveringFeature::kLift));
     SetType(endpoint, Type::kRollerShade);
     SetEndProductType(endpoint, EndProductType::kRollerShade);
     SetMode(endpoint, mode);
@@ -161,7 +161,7 @@ bool WindowCoveringManager::SetTargetPosition(chip::EndpointId endpoint, chip::P
     OperationalState opTilt, opLift;
     ChipLogError(NotSpecified, "Target value: %d", target);
 
-    if (HasFeature(endpoint, Feature::kTilt))
+    if (HasFeature(endpoint, WindowCoveringFeature::kTilt))
     {
         app::Clusters::WindowCovering::Attributes::CurrentPositionTiltPercent100ths::Get(endpoint, current);
         opTilt = computeOperationalState(target, current.Value());
@@ -169,7 +169,7 @@ bool WindowCoveringManager::SetTargetPosition(chip::EndpointId endpoint, chip::P
 
         status = app::Clusters::WindowCovering::Attributes::TargetPositionTiltPercent100ths::Set(endpoint, target);
     }
-    if (HasFeature(endpoint, Feature::kLift))
+    if (HasFeature(endpoint, WindowCoveringFeature::kLift))
     {
         app::Clusters::WindowCovering::Attributes::CurrentPositionTiltPercent100ths::Get(endpoint, current);
         opLift = computeOperationalState(target, current.Value());

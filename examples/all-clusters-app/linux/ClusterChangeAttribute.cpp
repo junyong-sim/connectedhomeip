@@ -74,7 +74,7 @@ void MatterPostAttributeChangeCallback(const app::ConcreteAttributePath & attrib
 
         BoolManager().ReceiveBoolStateChanged(endpoint, boolState);
     }
-    else if (clusterId == ColorControl::Id && attributeId == ColorControl::Attributes::ColorTemperature::Id)
+    else if (clusterId == ColorControl::Id && attributeId == ColorControl::Attributes::ColorTemperatureMireds::Id)
     {
         uint16_t colorTemp = 0;
         memcpy(&colorTemp, value, size);

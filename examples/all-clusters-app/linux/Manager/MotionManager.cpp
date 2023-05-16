@@ -65,7 +65,7 @@ bool MotionManager::SetSensorType(int endpoint, int value)
     auto ep = static_cast<chip::EndpointId>(endpoint);
     uint8_t deviceTypeBitmap = static_cast<uint8_t>(value);
 
-    status = Attributes::OccupancySensorType::Set(ep, static_cast<uint8_t>(value));
+    status = Attributes::OccupancySensorType::Set(ep, static_cast<chip::app::Clusters::OccupancySensing::OccupancySensorTypeEnum>(value));
     EmberAfStatus status2 = Attributes::OccupancySensorTypeBitmap::Set(ep, deviceTypeBitmap);
 
     return (status == EMBER_ZCL_STATUS_SUCCESS) && (status2 == EMBER_ZCL_STATUS_SUCCESS);
@@ -88,9 +88,11 @@ bool MotionManager::SetMotion(int endpoint, int value)
 
 bool MotionManager::GetMotion(int endpoint, int *value)
 {
-    uint8_t v;
+    chip::BitMask<chip::app::Clusters::OccupancySensing::OccupancyBitmap> v;
     EmberAfStatus status = Attributes::Occupancy::Get(static_cast<chip::EndpointId>(endpoint), &v);
-    *value = static_cast<uint8_t>(v);
+    //TODO
+    // *value = static_cast<uint8_t>(v);
+    *value = 0;
     return status == EMBER_ZCL_STATUS_SUCCESS;
 }
 

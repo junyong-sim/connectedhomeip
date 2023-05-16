@@ -151,6 +151,10 @@ typedef otError (*otDnsServiceResponseGetServiceName)(const otDnsServiceResponse
 typedef otError (*otDnsServiceResponseGetServiceInfo)(const otDnsServiceResponse * aResponse, otDnsServiceInfo * aServiceInfo);
 typedef otError (*otDnsClientResolveService)(otInstance * aInstance, const char * aInstanceLabel, const char * aServiceName,
                                              otDnsServiceCallback aCallback, void * aContext, const otDnsQueryConfig * aConfig);
+typedef otError (*otDnsClientResolveAddress)(otInstance * aInstance, const char * aHostName, otDnsAddressCallback aCallback,
+                                             void * aContext, const otDnsQueryConfig * aConfig);
+typedef otError (*otDnsAddressResponseGetAddress)(const otDnsAddressResponse * aResponse, uint16_t aIndex, otIp6Address * aAddress,
+                                                  uint32_t * aTtl);
 typedef uint16_t (*otMessageRead)(const otMessage * aMessage, uint16_t aOffset, void * aBuf, uint16_t aLength);
 typedef uint16_t (*otMessageGetLength)(const otMessage * aMessage);
 
@@ -271,6 +275,8 @@ public:
     otDnsServiceResponseGetServiceName mOtDnsServiceResponseGetServiceName;
     otDnsServiceResponseGetServiceInfo mOtDnsServiceResponseGetServiceInfo;
     otDnsClientResolveService mOtDnsClientResolveService;
+    otDnsClientResolveAddress mOtDnsClientResolveAddress;
+    otDnsAddressResponseGetAddress mOtDnsAddressResponseGetAddress;
     otMessageRead mOtMessageRead;
     otMessageGetLength mOtMessageGetLength;
 

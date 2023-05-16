@@ -33,7 +33,7 @@ constexpr const uint16_t kDefaultMovementStep                           = 2000;
 } // namespace
 
 void WindowCoveringManager::Init(EndpointId endpoint)
-{
+{aaa
     mState = OperationalState::Stall;
     mCurrentLiftPosition.SetNonNull(static_cast<uint16_t>(0));
     mTargetLiftPosition.SetNonNull(static_cast<uint16_t>(0));

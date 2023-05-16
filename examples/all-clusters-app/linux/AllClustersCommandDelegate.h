@@ -130,7 +130,7 @@ private:
     /**
      * Should be called when input occupancy commands
      */
-    void OnSamsungOccupancySignalHandler(uint8_t state);
+    void OnSamsungOccupancySignalHandler(uint8_t value);
 
     /**
      * Should be called when input window covering commands

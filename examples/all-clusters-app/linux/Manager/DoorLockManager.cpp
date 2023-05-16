@@ -28,14 +28,14 @@ namespace {
     DoorLockManager * doorLockManager[doorLockManagerSize] = { nullptr };
 }
 
-bool emberAfPluginDoorLockOnDoorLockCommand(chip::EndpointId endpointId, const Optional<ByteSpan> & pinCode, DlOperationError & err)
+bool emberAfPluginDoorLockOnDoorLockCommand(chip::EndpointId endpointId, const Optional<ByteSpan> & pinCode, OperationErrorEnum & err)
 {
     ChipLogProgress(Zcl, "samsung-all-clusters-app::DoorLock::emberAfPluginDoorLockOnDoorLockCommand");
     return true;
 }
 
 bool emberAfPluginDoorLockOnDoorUnlockCommand(chip::EndpointId endpointId, const Optional<ByteSpan> & pinCode,
-                                              DlOperationError & err)
+                                              OperationErrorEnum & err)
 {
     ChipLogProgress(Zcl, "samsung-all-clusters-app::DoorLock::emberAfPluginDoorLockOnDoorUnlockCommand");
     return true;
@@ -93,7 +93,7 @@ bool DoorLockManager::SetAutoRelockTime(int endpoint, int value)
 
 bool DoorLockManager::SetOperatingMode(int endpoint, int value)
 {
-    EmberAfStatus status = app::Clusters::DoorLock::Attributes::OperatingMode::Set(static_cast<chip::EndpointId>(endpoint), static_cast<app::Clusters::DoorLock::DlOperatingMode>(value));
+    EmberAfStatus status = app::Clusters::DoorLock::Attributes::OperatingMode::Set(static_cast<chip::EndpointId>(endpoint), static_cast<app::Clusters::DoorLock::OperatingModeEnum>(value));
     return status == EMBER_ZCL_STATUS_SUCCESS;
 }
 

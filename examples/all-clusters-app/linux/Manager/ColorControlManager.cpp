@@ -154,7 +154,7 @@ bool ColorControlManager::SetColorTemperature(int endpoint, uint16_t value)
     if (value < 1 || value > 65279)
         status = EMBER_ZCL_STATUS_FAILURE;
     else
-        status = chip::app::Clusters::ColorControl::Attributes::ColorTemperature::Set(static_cast<chip::EndpointId>(endpoint), value);
+        status = chip::app::Clusters::ColorControl::Attributes::ColorTemperatureMireds::Set(static_cast<chip::EndpointId>(endpoint), value);
     return status;
 }
 

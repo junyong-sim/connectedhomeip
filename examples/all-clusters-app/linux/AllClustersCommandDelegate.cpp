@@ -215,7 +215,7 @@ void AllClustersAppCommandHandler::HandleCommand(intptr_t context)
     }
     else if (name == "PowerOff")
     {
-        DeviceLayer::ThreadStackMgr().DeinitThreadStack();
+        // DeviceLayer::ThreadStackMgr().DeinitThreadStack();
         ChipLogError(NotSpecified, "call StopEventLoopTask");
         DeviceLayer::PlatformMgr().StopEventLoopTask();
     }
@@ -291,7 +291,7 @@ void AllClustersAppCommandHandler::OnSamsungColorTemperatureSignalHandler(uint16
     }
 }
 
-void AllClustersAppCommandHandler::OnSamsungOccupancySignalHandler(uint8_t state)
+void AllClustersAppCommandHandler::OnSamsungOccupancySignalHandler(uint8_t value)
 {
     int endpoint = 1;
     bool err = (DeviceLayer::SystemLayer().ScheduleLambda([endpoint, value] { DoorLockManager::SetLockState(endpoint, value); }) == CHIP_NO_ERROR);
