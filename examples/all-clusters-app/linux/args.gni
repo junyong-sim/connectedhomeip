@@ -24,4 +24,7 @@ chip_project_config_include_dirs = [
   "${chip_root}/examples/all-clusters-app/linux/include",
   "${chip_root}/third_party/openthread/ot-samsung/include",
 ]
+
+chip_mdns = "platform"
+
 chip_project_config_include_dirs += [ "${chip_root}/config/standalone" ]
