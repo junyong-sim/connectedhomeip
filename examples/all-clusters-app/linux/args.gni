@@ -20,6 +20,8 @@ chip_device_project_config_include = "<CHIPProjectAppConfig.h>"
 chip_project_config_include = "<CHIPProjectAppConfig.h>"
 chip_system_project_config_include = "<SystemProjectConfig.h>"
 
-chip_project_config_include_dirs =
-    [ "${chip_root}/examples/all-clusters-app/linux/include" ]
+chip_project_config_include_dirs = [
+  "${chip_root}/examples/all-clusters-app/linux/include",
+  "${chip_root}/third_party/openthread/ot-samsung/include",
+]
 chip_project_config_include_dirs += [ "${chip_root}/config/standalone" ]
