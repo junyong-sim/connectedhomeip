@@ -75,6 +75,53 @@ public:
     uint8_t GetMaxNetworks() override { return 1; };
 };
 
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+class DarwinThreadDriver final : public ThreadDriver
+{
+public:
+    class ThreadNetworkIterator final : public NetworkIterator
+    {
+    public:
+        ThreadNetworkIterator(DarwinThreadDriver * aDriver) : driver(aDriver) {}
+        size_t Count() override;
+        bool Next(Network & item) override;
+        void Release() override { delete this; }
+        ~ThreadNetworkIterator() override = default;
+
+    private:
+        DarwinThreadDriver * driver;
+        bool exhausted = false;
+    };
+
+    // BaseDriver
+    NetworkIterator * GetNetworks() override { return new ThreadNetworkIterator(this); }
+    CHIP_ERROR Init(BaseDriver::NetworkStatusChangeCallback * networkStatusChangeCallback) override;
+    void Shutdown() override;
+
+    // WirelessDriver
+    uint8_t GetMaxNetworks() override { return 1; }
+    uint8_t GetScanNetworkTimeoutSeconds() override { return 10; }
+    uint8_t GetConnectNetworkTimeoutSeconds() override { return 20; }
+
+    CHIP_ERROR CommitConfiguration() override;
+    CHIP_ERROR RevertConfiguration() override;
+
+    Status RemoveNetwork(ByteSpan networkId, MutableCharSpan & outDebugText, uint8_t & outNetworkIndex) override;
+    Status ReorderNetwork(ByteSpan networkId, uint8_t index, MutableCharSpan & outDebugText) override;
+    void ConnectNetwork(ByteSpan networkId, ConnectCallback * callback) override;
+
+    // ThreadDriver
+    Status AddOrUpdateNetwork(ByteSpan operationalDataset, MutableCharSpan & outDebugText, uint8_t & outNetworkIndex) override;
+    void ScanNetworks(ThreadDriver::ScanCallback * callback) override;
+
+private:
+    ThreadNetworkIterator mThreadIterator = ThreadNetworkIterator(this);
+    Thread::OperationalDataset mSavedNetwork;
+    Thread::OperationalDataset mStagingNetwork;
+};
+
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+
 } // namespace NetworkCommissioning
 } // namespace DeviceLayer
 } // namespace chip

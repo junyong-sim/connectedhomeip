@@ -19,6 +19,13 @@ import("${chip_root}/src/platform/device.gni")
 
 assert(chip_device_platform == "darwin")
 
+
+if (chip_enable_openthread) {
+  import("//build_overrides/openthread.gni")
+  import("//build_overrides/ot_br_posix.gni")
+  chip_enable_support_multiple_ot_libs = true
+}
+
 config("darwin_config") {
   frameworks = [
     "CoreData.framework",
@@ -76,6 +83,10 @@ static_library("Darwin") {
     "SystemTimeSupport.cpp",
   ]
 
+  if (chip_enable_openthread) {
+    sources += [ "NetworkCommissioningThreadDriver.cpp" ]
+  }
+
   if (chip_enable_wifi) {
     sources += [
       "WiFi/ConfigurationManagerImplWiFi.cpp",
@@ -105,6 +116,35 @@ static_library("Darwin") {
     "${chip_root}/src/platform:platform_base",
   ]
 
+  if (chip_enable_openthread) {
+    sources += [
+      "ThreadStackManagerImpl.cpp",
+      "ThreadStackManagerImpl.h",
+    ]
+    if (chip_enable_support_multiple_ot_libs) {
+      sources += [
+        "../OpenThread/OpenThreadDL_Manager.cpp",
+        "../OpenThread/OpenThreadUtils_DL.cpp",
+      ]
+    } else {
+      sources += [ "../OpenThread/OpenThreadUtils.cpp" ]
+    }
+  }
+
+  cflags = [
+    "-D_NO_NETWORK_COMMISSIONING_DRIVER_",
+    "-Wno-error=unused-result",
+    "-Wno-error=unused-variable",
+    "-Wno-error=unused-but-set-variable",
+  ]
+
+  if (!chip_enable_support_multiple_ot_libs) {
+    lib_dirs = [ "${chip_root}/examples/all-clusters-app/darwin/lib/" ]
+    libs = [ "openthread-cli" ]
+  } else {
+    cflags += [ "-DSUPPORT_MULTIPLE_OT_LIBS" ]
+  }
+
   public_configs = [ ":darwin_config" ]
 
   if (chip_enable_ota_requestor) {
@@ -114,7 +154,7 @@ static_library("Darwin") {
       "../Linux/OTAImageProcessorImpl.h",
     ]
   }
-
+  
   if (chip_enable_ble) {
     sources += [
       "BleApplicationDelegate.h",

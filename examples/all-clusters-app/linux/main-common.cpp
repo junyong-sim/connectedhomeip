@@ -183,6 +183,10 @@ NetworkCommissioning::LinuxEthernetDriver sEthernetDriver;
 #endif // CHIP_DEVICE_LAYER_TARGET_LINUX
 
 #if CHIP_DEVICE_LAYER_TARGET_DARWIN
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+NetworkCommissioning::DarwinThreadDriver sThreadDriver;
+
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 NetworkCommissioning::DarwinWiFiDriver sWiFiDriver;
 #endif // CHIP_DEVICE_CONFIG_ENABLE_WIFI

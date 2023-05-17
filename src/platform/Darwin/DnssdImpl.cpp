@@ -36,7 +36,9 @@ constexpr const char * kLocalDot    = "local.";
 constexpr const char * kProtocolTcp = "._tcp";
 constexpr const char * kProtocolUdp = "._udp";
 
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
 constexpr DNSServiceFlags kRegisterFlags        = kDNSServiceFlagsNoAutoRename;
+#endif
 constexpr DNSServiceFlags kBrowseFlags          = 0;
 constexpr DNSServiceFlags kGetAddrInfoFlags     = kDNSServiceFlagsTimeout | kDNSServiceFlagsShareConnection;
 constexpr DNSServiceFlags kResolveFlags         = kDNSServiceFlagsShareConnection;
@@ -65,6 +67,7 @@ std::string GetFullType(const DnssdService * service)
     return GetFullType(service->mType, service->mProtocol);
 }
 
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
 std::string GetFullTypeWithSubTypes(const char * type, DnssdServiceProtocol protocol, const char * subTypes[], size_t subTypeSize)
 {
     std::ostringstream typeBuilder;
@@ -77,6 +80,7 @@ std::string GetFullTypeWithSubTypes(const char * type, DnssdServiceProtocol prot
     }
     return typeBuilder.str();
 }
+#endif
 
 std::string GetFullTypeWithSubTypes(const char * type, DnssdServiceProtocol protocol)
 {
@@ -92,10 +96,12 @@ std::string GetFullTypeWithSubTypes(const char * type, DnssdServiceProtocol prot
     return fullType;
 }
 
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
 std::string GetFullTypeWithSubTypes(const DnssdService * service)
 {
     return GetFullTypeWithSubTypes(service->mType, service->mProtocol, service->mSubTypes, service->mSubTypeSize);
 }
+#endif
 
 std::string GetHostNameWithDomain(const char * hostname)
 {
@@ -168,6 +174,7 @@ MdnsContexts MdnsContexts::sInstance;
 
 namespace {
 
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
 static void OnRegister(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType err, const char * name, const char * type,
                        const char * domain, void * context)
 {
@@ -205,6 +212,7 @@ CHIP_ERROR Register(void * context, DnssdPublishCallback callback, uint32_t inte
 
     return MdnsContexts::GetInstance().Add(sdCtx, sdRef);
 }
+#endif
 
 void OnBrowseAdd(BrowseContext * context, const char * name, const char * type, const char * domain, uint32_t interfaceId)
 {
@@ -385,15 +393,30 @@ CHIP_ERROR ChipDnssdInit(DnssdAsyncReturnCallback successCallback, DnssdAsyncRet
     VerifyOrReturnError(successCallback != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(errorCallback != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
 
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     successCallback(context, CHIP_NO_ERROR);
+#else
+    ChipLogDetail(DeviceLayer, "JYSIM DOOHO DnssdImpl ChipDnssdInit - Thread");
+    ReturnErrorOnFailure(DeviceLayer::ThreadStackMgr().SetSrpDnsCallbacks(successCallback, errorCallback, context));
+
+    uint8_t macBuffer[DeviceLayer::ConfigurationManager::kPrimaryMACAddressLength];
+    MutableByteSpan mac(macBuffer);
+    char hostname[kHostNameMaxLength + 1] = "";
+    ReturnErrorOnFailure(DeviceLayer::ConfigurationMgr().GetPrimaryMACAddress(mac));
+    MakeHostName(hostname, sizeof(hostname), mac);
+
+    DeviceLayer::ThreadStackMgr().ClearSrpHost(hostname);
+#endif
     return CHIP_NO_ERROR;
 }
 
 void ChipDnssdShutdown()
 {
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     // Drop our existing advertisements now, so they don't stick around while we
     // are not actually in a responsive state.
     ChipDnssdRemoveServices();
+#endif
 }
 
 CHIP_ERROR ChipDnssdPublishService(const DnssdService * service, DnssdPublishCallback callback, void * context)
@@ -403,6 +426,7 @@ CHIP_ERROR ChipDnssdPublishService(const DnssdService * service, DnssdPublishCal
     VerifyOrReturnError(callback != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(strcmp(service->mHostName, "") != 0, CHIP_ERROR_INVALID_ARGUMENT);
 
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     ScopedTXTRecord record;
     ReturnErrorOnFailure(record.Init(service->mTextEntries, service->mTextEntrySize));
 
@@ -412,10 +436,27 @@ CHIP_ERROR ChipDnssdPublishService(const DnssdService * service, DnssdPublishCal
 
     return Register(context, callback, interfaceId, regtype.c_str(), service->mName, service->mPort, record, service->mAddressType,
                     hostname.c_str());
+#else
+    ChipLogDetail(DeviceLayer, "JYSIM DOOHO DnssdImpl ChipDnssdPublishService - Thread");
+    ReturnErrorCodeIf(service == nullptr, CHIP_ERROR_INVALID_ARGUMENT);
+    if (strcmp(service->mHostName, "") != 0)
+    {
+        ReturnErrorOnFailure(DeviceLayer::ThreadStackMgr().SetupSrpHost(service->mHostName));
+    }
+
+    char tServiceType[chip::Dnssd::kDnssdTypeAndProtocolMaxSize + 1];
+    snprintf(tServiceType, sizeof(tServiceType), "%s%s", service->mType, (service->mProtocol == DnssdServiceProtocol::kDnssdProtocolUdp ? kProtocolUdp : kProtocolTcp));
+
+    Span<const char * const> tSubTypes(service->mSubTypes, service->mSubTypeSize);
+    Span<const TextEntry> textEntries(service->mTextEntries, service->mTextEntrySize);
+    DeviceLayer::ThreadStackMgr().AddSrpService(service->mName, tServiceType, service->mPort, tSubTypes, textEntries);
+    return CHIP_NO_ERROR;
+#endif
 }
 
 CHIP_ERROR ChipDnssdRemoveServices()
 {
+#if 1 //ndef CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     assertChipStackLockedByCurrentThread();
 
     auto err = MdnsContexts::GetInstance().RemoveAllOfType(ContextType::Register);
@@ -424,6 +465,11 @@ CHIP_ERROR ChipDnssdRemoveServices()
         err = CHIP_NO_ERROR;
     }
     return err;
+#else
+    ChipLogDetail(DeviceLayer, "JYSIM DOOHO DnssdImpl ChipDnssdRemoveServices - Thread");
+    DeviceLayer::ThreadStackMgr().InvalidateAllSrpServices();
+    return CHIP_NO_ERROR;
+#endif
 }
 
 CHIP_ERROR ChipDnssdFinalizeServiceUpdate()

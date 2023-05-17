@@ -52,7 +52,8 @@ declare_args() {
       chip_device_platform == "cc13x2_26x2" ||
       chip_device_platform == "cc13x4_26x4" ||
       chip_device_platform == "k32w0" || chip_device_platform == "tizen" ||
-      chip_device_platform == "webos"
+      chip_device_platform == "webos" ||
+      (chip_device_platform == "darwin" && current_os == "mac")
 }
 
 declare_args() {

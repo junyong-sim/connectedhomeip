@@ -63,7 +63,7 @@ CHIP_ERROR ConnectivityManagerImpl::_Init()
 {
     // Initialize the generic base classes that require it.
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-    ReturnErrorOnFailure(GenericConnectivityManagerImpl_Thread<ConnectivityManagerImpl>::_Init());
+    GenericConnectivityManagerImpl_Thread<ConnectivityManagerImpl>::_Init();
 #endif
 
     return CHIP_NO_ERROR;
