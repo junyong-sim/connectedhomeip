@@ -386,7 +386,7 @@ exit:
  * For example, when we setup more than one dongles,
  * applying device number to UDP port offset
  */
-static int getInstanceNum()
+static uint16_t getInstanceNum()
 {
 #ifdef CHIP_CONFIG_MULTIPLE_INSTANCE
     return LinuxDeviceOptions::GetInstance().device_num;
@@ -407,7 +407,7 @@ void ChipLinuxAppMainLoop(AppMainLoopImplementation * impl)
     std::thread shellThread([]() { Engine::Root().RunMainLoop(); });
     Shell::RegisterCommissioneeCommands();
 #endif
-    int offset                               = getInstanceNum();
+    uint16_t offset                               = getInstanceNum();
     initParams.operationalServicePort        = CHIP_PORT + offset;     // 5540 - 5549
     initParams.userDirectedCommissioningPort = CHIP_UDC_PORT + offset; // 5550 - 5559
 

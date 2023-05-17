@@ -1578,7 +1578,7 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::_WriteThreadNetw
             VerifyOrExit(otErr == OT_ERROR_NONE, err = MapOpenThreadError(otErr));
 #if OPENTHREAD_API_VERSION >= 219
             uint64_t activeTimestamp = (activeDataset.mActiveTimestamp.mSeconds << 16) |
-                (activeDataset.mActiveTimestamp.mTicks << 1) | activeDataset.mActiveTimestamp.mAuthoritative;
+                static_cast<uint64_t>(activeDataset.mActiveTimestamp.mTicks << 1) | activeDataset.mActiveTimestamp.mAuthoritative;
 #else
             uint64_t activeTimestamp  = activeDataset.mActiveTimestamp;
 #endif
@@ -1596,7 +1596,7 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::_WriteThreadNetw
             VerifyOrExit(otErr == OT_ERROR_NONE, err = MapOpenThreadError(otErr));
 #if OPENTHREAD_API_VERSION >= 219
             uint64_t pendingTimestamp = (activeDataset.mPendingTimestamp.mSeconds << 16) |
-                (activeDataset.mPendingTimestamp.mTicks << 1) | activeDataset.mPendingTimestamp.mAuthoritative;
+                static_cast<uint64_t>(activeDataset.mPendingTimestamp.mTicks << 1) | activeDataset.mPendingTimestamp.mAuthoritative;
 #else
             uint64_t pendingTimestamp = activeDataset.mPendingTimestamp;
 #endif
@@ -2573,7 +2573,7 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::FromOtDnsRespons
         return CHIP_ERROR_INVALID_ARGUMENT;
 
     // Extract from the <type>.<protocol>.<domain-name>. the <type> part.
-    size_t substringSize = strchr(serviceType, '.') - serviceType;
+    size_t substringSize = static_cast<size_t>(strchr(serviceType, '.') - serviceType);
     if (substringSize >= ArraySize(mdnsService.mType))
     {
         return CHIP_ERROR_INVALID_ARGUMENT;
@@ -2586,7 +2586,7 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::FromOtDnsRespons
     if (strchr(protocolSubstringStart, '.') == nullptr)
         return CHIP_ERROR_INVALID_ARGUMENT;
 
-    substringSize = strchr(protocolSubstringStart, '.') - protocolSubstringStart;
+    substringSize = static_cast<size_t>(strchr(protocolSubstringStart, '.') - protocolSubstringStart);
     if (substringSize >= ArraySize(protocol))
     {
         return CHIP_ERROR_INVALID_ARGUMENT;
