@@ -121,6 +121,10 @@ def BuildHostTarget():
 
     if (HostBoard.NATIVE.PlatformName() == 'darwin'):
         app_parts.append(TargetPart('darwin-framework-tool', app=HostApp.CHIP_TOOL_DARWIN))
+        target.AppendModifier(name="fed", use_fed=True),
+        target.AppendModifier(name="sed", use_sed=True),
+        target.AppendModifier(name="ssed", use_ssed=True),
+        target.AppendModifier(name="med", use_med=True),
 
     target.AppendFixedTargets(app_parts)
 
