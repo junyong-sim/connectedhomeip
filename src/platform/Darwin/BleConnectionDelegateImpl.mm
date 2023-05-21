@@ -53,16 +53,18 @@ typedef NS_ENUM(uint8_t, BleConnectionMode) {
     kConnecting,
 };
 
-@interface BleConnection : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
+@interface BleConnection : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate, CBPeripheralManagerDelegate>
 
 @property (strong, nonatomic) dispatch_queue_t chipWorkQueue;
 @property (strong, nonatomic) dispatch_queue_t workQueue;
 @property (strong, nonatomic) CBCentralManager * centralManager;
+@property (strong, nonatomic) CBPeripheralManager *peripheralManager;
 @property (strong, nonatomic) CBPeripheral * peripheral;
 @property (strong, nonatomic) CBUUID * shortServiceUUID;
 @property (nonatomic, readonly, nullable) dispatch_source_t timer;
 @property (nonatomic, readonly) BleConnectionMode currentMode;
 @property (strong, nonatomic) NSMutableDictionary<CBPeripheral *, NSDictionary *> * cachedPeripherals;
+@property (nonatomic, strong) NSDictionary *advertisementData;
 @property (unsafe_unretained, nonatomic) bool found;
 @property (unsafe_unretained, nonatomic) chip::SetupDiscriminator deviceDiscriminator;
 @property (unsafe_unretained, nonatomic) void * appState;
@@ -103,7 +105,7 @@ namespace DeviceLayer {
             // Make a copy of the device discriminator for the block to capture.
             SetupDiscriminator deviceDiscriminator = inDeviceDiscriminator;
 
-            ChipLogProgress(Ble, "%s", __FUNCTION__);
+            ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
             if (!bleWorkQueue) {
                 bleWorkQueue = dispatch_queue_create(kBleWorkQueueName, DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
             }
@@ -134,7 +136,7 @@ namespace DeviceLayer {
         {
             assertChipStackLockedByCurrentThread();
 
-            ChipLogProgress(Ble, "%s", __FUNCTION__);
+            ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
 
             if (!bleWorkQueue) {
                 bleWorkQueue = dispatch_queue_create(kBleWorkQueueName, DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
@@ -165,7 +167,7 @@ namespace DeviceLayer {
         {
             assertChipStackLockedByCurrentThread();
 
-            ChipLogProgress(Ble, "%s", __FUNCTION__);
+            ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
 
             if (!bleWorkQueue) {
                 bleWorkQueue = dispatch_queue_create(kBleWorkQueueName, DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
@@ -193,11 +195,37 @@ namespace DeviceLayer {
             CancelConnection();
         }
 
+        void BleConnectionDelegateImpl::StartAdvertising(BleScannerDelegate * delegate)
+        {
+            assertChipStackLockedByCurrentThread();
+
+            ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
+
+            if (!bleWorkQueue) {
+                bleWorkQueue = dispatch_queue_create(kBleWorkQueueName, DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
+            }
+
+            dispatch_async(bleWorkQueue, ^{
+                // If the previous connection delegate was not a try to connect to something, just reuse it instead of
+                // creating a brand new connection but update the discriminator and the ble layer members.
+                if (ble and ![ble isConnecting]) {
+                    [ble updateWithDelegate:delegate];
+                    return;
+                }
+
+                [ble stop];
+                ble = [[BleConnection alloc] initWithDelegate:delegate queue:bleWorkQueue];
+                ble.onConnectionComplete = OnConnectionComplete;
+                ble.onConnectionError = OnConnectionError;
+                ble.peripheralManager = [ble.peripheralManager initWithDelegate:ble queue:bleWorkQueue];
+            });
+        }
+
         CHIP_ERROR BleConnectionDelegateImpl::CancelConnection()
         {
             assertChipStackLockedByCurrentThread();
 
-            ChipLogProgress(Ble, "%s", __FUNCTION__);
+            ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
             if (bleWorkQueue == nil) {
                 return CHIP_NO_ERROR;
             }
@@ -221,6 +249,7 @@ namespace DeviceLayer {
 
 - (id)initWithQueue:(dispatch_queue_t)queue
 {
+    ChipLogProgress(Ble, "JYSIM - %s start", __FUNCTION__);
     self = [super init];
     if (self) {
         self.shortServiceUUID = [UUIDHelper GetShortestServiceUUID:&chip::Ble::CHIP_BLE_SVC_ID];
@@ -228,8 +257,14 @@ namespace DeviceLayer {
         _workQueue = queue;
         _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
         _centralManager = [CBCentralManager alloc];
+        _peripheralManager = [CBPeripheralManager alloc];
         _found = false;
         _cachedPeripherals = [[NSMutableDictionary alloc] init];
+        _advertisementData = [[NSDictionary alloc] init];
+        _advertisementData = @{
+            CBAdvertisementDataLocalNameKey: @"MATTER-3899",
+            CBAdvertisementDataServiceUUIDsKey: @[[CBUUID UUIDWithString:@"99999999-8888-2222-3333-444455556666"]]
+        };
         _currentMode = kUndefined;
 
         dispatch_source_set_event_handler(_timer, ^{
@@ -237,58 +272,68 @@ namespace DeviceLayer {
             [self dispatchConnectionError:BLE_ERROR_APP_CLOSED_CONNECTION];
         });
     }
+    ChipLogProgress(Ble, "JYSIM - %s end", __FUNCTION__);
 
     return self;
 }
 
 - (id)initWithDelegate:(chip::DeviceLayer::BleScannerDelegate *)delegate queue:(dispatch_queue_t)queue
 {
+    ChipLogProgress(Ble, "JYSIM - %s start", __FUNCTION__);
     self = [self initWithQueue:queue];
     if (self) {
         _scannerDelegate = delegate;
         _currentMode = (delegate == nullptr) ? kScanningWithoutDelegate : kScanning;
         [self resetTimer];
     }
-
+    ChipLogProgress(Ble, "JYSIM - %s end", __FUNCTION__);
     return self;
 }
 
 - (id)initWithDiscriminator:(const chip::SetupDiscriminator &)deviceDiscriminator queue:(dispatch_queue_t)queue
 {
+    ChipLogProgress(Ble, "JYSIM - %s start", __FUNCTION__);
     self = [self initWithQueue:queue];
     if (self) {
         _deviceDiscriminator = deviceDiscriminator;
         _currentMode = kConnecting;
         [self resetTimer];
     }
-
+    ChipLogProgress(Ble, "JYSIM - %s end", __FUNCTION__);
     return self;
 }
 
 - (BOOL)isScanningWithoutDelegate
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     return _currentMode == kScanningWithoutDelegate;
 }
 
 - (BOOL)isScanning
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     return _currentMode == kScanning;
 }
 
 - (BOOL)isConnecting
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     return _currentMode == kConnecting;
 }
 
 - (void)resetTimer
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if ([self isConnecting]) {
+        ChipLogProgress(Ble, "JYSIM - %s isConnecting", __FUNCTION__);
         auto timeout = static_cast<int64_t>(kScanningWithDiscriminatorTimeoutInSeconds * NSEC_PER_SEC);
         dispatch_source_set_timer(_timer, dispatch_walltime(nullptr, timeout), DISPATCH_TIME_FOREVER, 5 * NSEC_PER_SEC);
     } else if ([self isScanningWithoutDelegate]) {
+        ChipLogProgress(Ble, "JYSIM - %s isScanningWithoutDelegate", __FUNCTION__);
         auto timeout = static_cast<int64_t>(kScanningWithoutDelegateTimeoutInSeconds * NSEC_PER_SEC);
         dispatch_source_set_timer(_timer, dispatch_walltime(nullptr, timeout), DISPATCH_TIME_FOREVER, 5 * NSEC_PER_SEC);
     } else if ([self isScanning]) {
+        ChipLogProgress(Ble, "JYSIM - %s isScanning", __FUNCTION__);
         dispatch_source_cancel(_timer);
     } else {
         // It should not happens.
@@ -300,6 +345,7 @@ namespace DeviceLayer {
 // All our callback dispatch must happen on _chipWorkQueue
 - (void)dispatchConnectionError:(CHIP_ERROR)error
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     dispatch_async(_chipWorkQueue, ^{
         if (self.onConnectionError != nil) {
             self.onConnectionError(self.appState, error);
@@ -309,6 +355,7 @@ namespace DeviceLayer {
 
 - (void)dispatchConnectionComplete:(CBPeripheral *)peripheral
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     dispatch_async(_chipWorkQueue, ^{
         if (self.onConnectionComplete != nil) {
             self.onConnectionComplete(self.appState, (__bridge void *) peripheral);
@@ -320,6 +367,7 @@ namespace DeviceLayer {
 
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     switch (central.state) {
     case CBManagerStatePoweredOn:
         ChipLogDetail(Ble, "CBManagerState: ON");
@@ -350,6 +398,7 @@ namespace DeviceLayer {
         advertisementData:(NSDictionary *)advertisementData
                      RSSI:(NSNumber *)RSSI
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     NSNumber * isConnectable = [advertisementData objectForKey:CBAdvertisementDataIsConnectable];
     if ([isConnectable boolValue] == NO) {
         return;
@@ -390,11 +439,13 @@ namespace DeviceLayer {
 
 - (BOOL)checkDiscriminator:(uint16_t)discriminator
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     return _deviceDiscriminator.MatchesLongDiscriminator(discriminator);
 }
 
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     [peripheral setDelegate:self];
     [peripheral discoverServices:nil];
 }
@@ -405,6 +456,7 @@ namespace DeviceLayer {
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if (nil != error) {
         ChipLogError(Ble, "BLE:Error finding Chip Service in the device: [%s]", [error.localizedDescription UTF8String]);
     }
@@ -425,6 +477,7 @@ namespace DeviceLayer {
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if (nil != error) {
         ChipLogError(
             Ble, "BLE:Error finding Characteristics in Chip service on the device: [%s]", [error.localizedDescription UTF8String]);
@@ -438,6 +491,7 @@ namespace DeviceLayer {
     didWriteValueForCharacteristic:(CBCharacteristic *)characteristic
                              error:(NSError *)error
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if (nil == error) {
         chip::Ble::ChipBleUUID svcId;
         chip::Ble::ChipBleUUID charId;
@@ -458,6 +512,7 @@ namespace DeviceLayer {
     didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
                                           error:(NSError *)error
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     bool isNotifying = characteristic.isNotifying;
 
     if (nil == error) {
@@ -491,6 +546,7 @@ namespace DeviceLayer {
     didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
                               error:(NSError *)error
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if (nil == error) {
         chip::Ble::ChipBleUUID svcId;
         chip::Ble::ChipBleUUID charId;
@@ -520,8 +576,52 @@ namespace DeviceLayer {
 
 // End CBPeripheralDelegate
 
+// Start CBPeripheralManagerDelegate
+
+- (void)startAdvertising {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
+    [self.peripheralManager startAdvertising:self.advertisementData];
+}
+
+- (void)stopAdvertising {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
+    [self.peripheralManager stopAdvertising];
+}
+
+- (void)peripheralManagerDidStartAdvertising:(CBPeripheralManager *)peripheral error:(nullable NSError *)error {
+    ChipLogProgress(Ble, "JYSIM - peripheralManagerDidStartAdvertising");
+    if (error) {
+        ChipLogProgress(Ble, "JWLEE peripheralManagerDidStartAdvertising failed");
+    } else {
+        ChipLogProgress(Ble, "JWLEE peripheralManagerDidStartAdvertising start");
+    }
+}
+
+- (void)peripheralManagerDidStopAdvertising:(CBPeripheralManager *)peripheral error:(NSError *)error {
+    ChipLogProgress(Ble, "JYSIM - peripheralManagerDidStopAdvertising");
+    if (error) {
+        ChipLogProgress(Ble, "JWLEE peripheralManagerDidStopAdvertising failed");
+    } else {
+        ChipLogProgress(Ble, "JWLEE peripheralManagerDidStopAdvertising start");
+    }
+}
+
+- (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
+    if (peripheral.state == CBManagerStatePoweredOn) {
+        ChipLogProgress(Ble, "JWLEE BLEAdvertiser CBManagerStatePoweredOn");
+        [self startAdvertising];
+    } else {
+        ChipLogProgress(Ble, "JWLEE BLEAdvertiser not CBManagerStatePoweredOn !!!");
+        [self stopAdvertising];
+    }
+}
+
+// End CBPeripheralManagerDelegate
+
 - (void)start
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     dispatch_resume(_timer);
 
     // If a peripheral has already been found, try to connect to it once BLE starts,
@@ -535,6 +635,7 @@ namespace DeviceLayer {
 
 - (void)stop
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     [self stopScanning];
     [self removePeripheralsFromCache];
     _cachedPeripherals = nil;
@@ -563,6 +664,7 @@ namespace DeviceLayer {
 
 - (void)startScanning
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if (!_centralManager) {
         return;
     }
@@ -572,6 +674,7 @@ namespace DeviceLayer {
 
 - (void)stopScanning
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if (!_centralManager) {
         return;
     }
@@ -581,6 +684,7 @@ namespace DeviceLayer {
 
 - (void)connect:(CBPeripheral *)peripheral
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     if (!_centralManager || !peripheral) {
         return;
     }
@@ -591,6 +695,7 @@ namespace DeviceLayer {
 
 - (void)updateWithDelegate:(chip::DeviceLayer::BleScannerDelegate *)delegate
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     _scannerDelegate = delegate;
     _currentMode = (delegate == nullptr) ? kScanningWithoutDelegate : kScanning;
 
@@ -610,6 +715,7 @@ namespace DeviceLayer {
 
 - (void)updateWithDiscriminator:(const chip::SetupDiscriminator &)deviceDiscriminator
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     _deviceDiscriminator = deviceDiscriminator;
     _scannerDelegate = nil;
     _currentMode = kConnecting;
@@ -639,6 +745,7 @@ namespace DeviceLayer {
 
 - (void)updateWithPeripheral:(CBPeripheral *)peripheral
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     _scannerDelegate = nil;
     _currentMode = kConnecting;
 
@@ -649,6 +756,7 @@ namespace DeviceLayer {
 
 - (void)addPeripheralToCache:(CBPeripheral *)peripheral data:(NSData *)data
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     dispatch_source_t timeoutTimer;
 
     if ([_cachedPeripherals objectForKey:peripheral]) {
@@ -698,6 +806,7 @@ namespace DeviceLayer {
 
 - (void)removePeripheralsFromCache
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     for (CBPeripheral * peripheral in [_cachedPeripherals allValues]) {
         [self removePeripheralFromCache:peripheral];
     }
@@ -716,6 +825,7 @@ namespace DeviceLayer {
                                      svcId:(chip::Ble::ChipBleUUID *)svcId
                                     charId:(chip::Ble::ChipBleUUID *)charId
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     static const size_t FullUUIDLength = 16;
     if ((FullUUIDLength != sizeof(charId->bytes)) || (FullUUIDLength != sizeof(svcId->bytes))
         || (FullUUIDLength != characteristic.UUID.data.length)) {
@@ -754,6 +864,7 @@ namespace DeviceLayer {
 
 - (void)setBleLayer:(chip::Ble::BleLayer *)bleLayer
 {
+    ChipLogProgress(Ble, "JYSIM - %s", __FUNCTION__);
     _mBleLayer = bleLayer;
 }
 

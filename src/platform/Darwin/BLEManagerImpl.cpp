@@ -117,6 +117,11 @@ bool BLEManagerImpl::_IsAdvertisingEnabled()
 CHIP_ERROR BLEManagerImpl::_SetAdvertisingEnabled(bool val)
 {
     ChipLogDetail(DeviceLayer, "%s", __FUNCTION__);
+    if (mConnectionDelegate)
+    {
+        static_cast<BleConnectionDelegateImpl *>(mConnectionDelegate)->StartAdvertising(nullptr);
+        return CHIP_NO_ERROR;
+    }
     return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
 }
 
